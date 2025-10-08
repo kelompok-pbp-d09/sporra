@@ -1,4 +1,4 @@
-# 🏅 **Spora** — Forum dan Komunitas Olahraga
+# 🏅 **Sporra** — Forum dan Komunitas Olahraga
 
 ## 👥 **Anggota Kelompok**
 | No | Nama Lengkap | NPM |
