@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SportsConnect{% endblock %}</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <!-- This now correctly links to the file in your project's static folder -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        /* A good place for a project-wide font */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold">SportsConnect</a>
+            <div class="hidden md:flex items-center space-x-4">
+                <a href="#" class="hover:text-blue-400">Home</a>
+                <!-- Team members will add their links here, e.g., for the News app -->
+                <!-- <a href="{% url 'news:article_list' %}" class="hover:text-blue-400">News</a> -->
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-8">
+        {% block content %}
+        <!-- App-specific content will be injected here -->
+        {% endblock %}
+    </main>
+
+</body>
+</html>
