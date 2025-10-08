@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ article.title }}</title>
+    <!-- Add your CSS links here -->
+</head>
+<body>
+    <a href="{% url 'news:article_list' %}">&larr; Back to News</a>
+    <hr>
+
+    <h1>{{ article.title }}</h1>
+    <p>
+        <strong>By:</strong> {{ article.author.username }} | 
+        <strong>Category:</strong> {{ article.category.name }}
+    </p>
+    <p><em>Published on {{ article.published_date|date:"F d, Y" }}</em></p>
+
+    <div>
+        {{ article.content|linebreaks }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>News Articles</title>
+    <!-- Add your CSS links here -->
+</head>
+<body>
+    <h1>Sports News</h1>
+
+    <!-- Filter Section -->
+    <div>
+        <strong>Filter by Sport:</strong>
+        <a href="{% url 'news:article_list' %}">All Sports</a>
+        {% for category in categories %}
+            <a href="?category={{ category.slug }}">{{ category.name }}</a>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <!-- Article List Section -->
+    <div>
+        {% for article in articles %}
+            <article>
+                <h2><a href="{% url 'news:article_detail' slug=article.slug %}">{{ article.title }}</a></h2>
+                <p>
+                    <strong>Author:</strong> {{ article.author.username }} | 
+                    <strong>Category:</strong> {{ article.category.name }}
+                </p>
+                <p><em>Published on {{ article.published_date|date:"F d, Y" }}</em></p>
+                <p>{{ article.content|truncatewords:30 }}</p> <!-- Shows a short preview -->
+            </article>
+        {% empty %}
+            <p>No articles found.</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
