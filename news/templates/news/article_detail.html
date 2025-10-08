@@ -1,23 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ article.title }}</title>
-    <!-- Add your CSS links here -->
-</head>
-<body>
-    <a href="{% url 'news:article_list' %}">&larr; Back to News</a>
-    <hr>
+{% extends 'base.html' %}
 
-    <h1>{{ article.title }}</h1>
-    <p>
-        <strong>By:</strong> {{ article.author.username }} | 
-        <strong>Category:</strong> {{ article.category.name }}
+{% block title %}{{ article.title }} | SportsConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    {% if article.image %}
+    <img class="w-full h-96 object-cover rounded-lg mb-8" src="{{ article.image.url }}" alt="{{ article.title }}">
+    {% endif %}
+    
+    <p class="text-blue-400 font-semibold">{{ article.category.name }}</p>
+    <h1 class="text-5xl font-bold my-4">{{ article.title }}</h1>
+    <p class="text-gray-400 mb-8">
+        By {{ article.author.username }} on {{ article.published_date|date:"F d, Y" }}
     </p>
-    <p><em>Published on {{ article.published_date|date:"F d, Y" }}</em></p>
 
-    <div>
+    <div class="text-lg text-gray-300 leading-relaxed prose prose-invert max-w-none">
         {{ article.content|linebreaks }}
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
