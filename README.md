@@ -62,4 +62,7 @@ Dengan sistem ini, Spora menjadi wadah komunitas olahraga yang aktif, interaktif
 
 ---
 
-## 🧩 **Link Deployment PWS & Design**
+## 🧩 **Link Deployment PWS, Sumber Dataset & Design**
+Link Deployment PWS : https://afero-aqil-sporra.pbp.cs.ui.ac.id/
+Link Dataset        :
+Link Design         :
