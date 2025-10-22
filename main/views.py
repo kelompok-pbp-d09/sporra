@@ -38,7 +38,7 @@ def create_event(request):
     context = {'form': form}
     return render(request, 'create_event.html', context)
 
-def event_edit(request, id):
+def edit_event(request, id):
     event = get_object_or_404(Event, pk=id)
     form = EventForm(request.POST or None, request.FILES or None, instance=event)
     if form.is_valid() and request.method == 'POST':
@@ -47,4 +47,4 @@ def event_edit(request, id):
     context = {
         'form': form
     }
-    return render(request, 'event_edit.html', context)
+    return render(request, 'main/edit_event.html', context)

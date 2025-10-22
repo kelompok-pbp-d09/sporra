@@ -1,5 +1,9 @@
-<title>Event Details</title>
-<p><a href="{% url 'main:home_event' %}">← Back to Event List</a></p>
+{% extends 'base.html' %}
+{% block meta %}
+<title>Event Event</title>
+{% endblock meta %}
+{% block content %}
+<p><a href="{% url 'main:home_event' %}"><button>← Back to Event List</button></a></p>
 
 <h1>{{ event.title }}</h1>
 
@@ -9,13 +13,19 @@
   | Views: {{ event.event_views }}
 </p>
 <p>Location: {{event.location}}</p>
+<p>Price: ${{ event.price }}</p>
 <p>{{ event.description }}</p>
 
 <a href="{% url 'main:create_event' %}">
     <button>+ Join</button>
     </a>
+    
 {% if event.user %}
   <p>Author: {{ event.user.username }}</p>
 {% else %}
   <p>Author: Anonymous</p>
 {% endif %}
+
+<p><a href="{% url 'main:edit_event' event.id %}"><button>Edit Event</button></a></p>
+
+{% endblock content %}

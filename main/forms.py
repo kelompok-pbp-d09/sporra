@@ -5,7 +5,7 @@ from main.models import Event
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ["title", "description", "date", "location", "category", "Max_participants"]
+        fields = ["title", "description", "date", "location", "category", "Max_participants", "price"]
 
     def clean_title(self):
         title = self.cleaned_data.get("title", "")

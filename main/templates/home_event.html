@@ -1,3 +1,10 @@
+{% extends 'base.html' %}
+{% block meta %}
+<title>Event Home</title>
+{% endblock meta %}
+
+{% block content %}
+
 <h1>Event List</h1>
 
 <a href="{% url 'main:create_event' %}">
@@ -21,3 +28,5 @@
 {% else %}
   <p>No events available.</p>
 {% endif %}
+
+{% endblock content %}

@@ -1,15 +1,28 @@
-<title>Create Event - Sporra</title>
+{% extends 'base.html' %}
+
+{% block meta %}
+<title>Create Event</title>
+{% endblock meta %}
+
+{% block content %}
+
+<p><a href="{% url 'main:home_event' %}">← Back to Event List</a></p>
+
 <h1>Add Event</h1>
 
-<form method="POST">
-  {% csrf_token %}
-  <table>
-    {{ form.as_table }}
-    <tr>
-      <td></td>
-      <td>
-        <input type="submit" value="Add EVENT" />
-      </td>
-    </tr>
-  </table>
-</form>
+<div>
+    <form method="POST">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+        <tr>
+        <td></td>
+        <td>
+            <input type="submit" value="Add EVENT" />
+        </td>
+        </tr>
+    </table>
+    </form>
+</div>
+
+{% endblock content %}
