@@ -6,11 +6,11 @@ from django.core import serializers
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-import datetime
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.html import strip_tags
+from django.utils import timezone
 
 # Create your views here.
 def home_event(request):
@@ -23,10 +23,20 @@ def home_event(request):
 def event_detail(request, id):
     event = get_object_or_404(Event, pk=id)
     event.increment_views()
+    event_time = event.date
+    if timezone.is_naive(event_time):
+        print("[LANGKAH 2] Waktu terdeteksi 'NAIVE', diubah menjadi UTC.")
+        event_time = timezone.make_aware(event_time, timezone.utc)
+
+    current_time_utc = timezone.now()
+    has_ended = event_time < current_time_utc
+
     context = {
-        'event': event
+        'event': event,
+        'has_ended': has_ended,
     }
     return render(request, 'event_detail.html', context)
+
 
 def create_event(request):
     form = EventForm(request.POST or None, request.FILES or None)

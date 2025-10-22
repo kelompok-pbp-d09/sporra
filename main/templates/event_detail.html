@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
+{% load tz %}
+
 {% block meta %}
-<title>Event Event</title>
+<title>{{ event.title }} - Event Detail</title>
 {% endblock meta %}
+
 {% block content %}
 <p><a href="{% url 'main:home_event' %}"><button>← Back to Event List</button></a></p>
 
@@ -9,23 +12,27 @@
 
 <p>
   <b>{{ event.get_category_display }}</b>
-  | <i>{{ event.date|date:"d M Y, H:i" }}</i>
   | Views: {{ event.event_views }}
 </p>
-<p>Location: {{event.location}}</p>
-<p>Price: ${{ event.price }}</p>
-<p>{{ event.description }}</p>
 
-<a href="{% url 'main:create_event' %}">
-    <button>+ Join</button>
-    </a>
-    
-{% if event.user %}
-  <p>Author: {{ event.user.username }}</p>
+<p>Waktu acara: {{ event.date|localtime|date:"d M Y, H:i" }}</p>
+<p>Lokasi: {{ event.location }}</p>
+<p>{{ event.description }}</p>
+<p>Harga: Rp.{{ event.price }}</p>
+
+{% if has_ended %}
+    <p><strong>Acara ini telah selesai.</strong> Terima kasih atar ketertarikannya!</p>
 {% else %}
-  <p>Author: Anonymous</p>
+    <a href="{% url 'main:create_event' %}">
+        <button>Daftar</button>
+    </a>
+{% endif %}
+
+{% if event.user %}
+  <p>Pembuat acara: {{ event.user.username }}</p>
+{% else %}
+  <p>Pembuat acara: Anonymous</p>
 {% endif %}
 
 <p><a href="{% url 'main:edit_event' event.id %}"><button>Edit Event</button></a></p>
-
 {% endblock content %}

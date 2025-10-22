@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
+{% load tz %}
+
 {% block meta %}
 <title>Event Home</title>
 {% endblock meta %}
 
 {% block content %}
-
 <h1>Event List</h1>
 
 <a href="{% url 'main:create_event' %}">
   <button>+ Add Event</button>
 </a>
+
+{% now "Asia/Jakarta" as current_time %}
 
 {% if event_list %}
   <ul>
@@ -19,7 +22,12 @@
           <a href="{% url 'main:event_detail' event.id %}">{{ event.title }}</a>
         </h2>
         <p>{{ event.description }}</p>
-        <p><strong>Date:</strong> {{ event.date|date:"d M Y, H:i" }}</p>
+        <p>
+          <strong>Date:</strong> {{ event.date|date:"d F Y, H:i" }}
+          {% if event.date <= current_time %}
+            <span style="color: red; font-weight: bold;">— Event has ended</span>
+          {% endif %}
+        </p>
         <p>Category: {{ event.get_category_display }}</p>
       </li>
       <hr>
@@ -28,5 +36,4 @@
 {% else %}
   <p>No events available.</p>
 {% endif %}
-
 {% endblock content %}
