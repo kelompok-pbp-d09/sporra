@@ -23,13 +23,10 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    
-    path('', RedirectView.as_view(url='/news/', permanent=True)),  #SHOW NEWS AS MAIN URL FOR DEVELOPMENT PURPOSES
-    
-    
     path('admin/', admin.site.urls),
     path('news/', include('news.urls')),
     path('ticketing/', include('ticketing.urls')),
+    path('profile_user/', include('profile_user.urls')),
     path('forum/', include('forumdiskusi.urls')),
 ]
 

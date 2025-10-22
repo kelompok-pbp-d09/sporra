@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'news',
     'ticketing',
+    'profile_user',
     'forumdiskusi',
 ]
 
