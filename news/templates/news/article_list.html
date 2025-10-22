@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %} 
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-white">Daftar Berita</h1>
+    
+    {# --- TOMBOL REFRESH --- #}
+    <button id="refresh-button" 
+            class="inline-flex items-center bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 animate-spin hidden" id="loading-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
+        <span id="refresh-text">Refresh</span>
+    </button>
+    {# -------------------- #}
+</div>
+
+{# --- FILTER KATEGORI (Tidak berubah) --- #}
+<div class="flex flex-wrap gap-2 mb-6">
+  <a
+    href="{% url 'news:article-list' %}"
+    class="py-1 px-4 rounded-full text-sm font-medium transition {% if not current_category %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}"
+  >
+    Semua
+  </a>
+  {% for value, display_name in categories %}
+    {% if value != 'olahraga lain' %} 
+    <a href="{% url 'news:article-list' %}?category={{ value }}" 
+       class="py-1 px-4 rounded-full text-sm font-medium transition {% if current_category == value %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+      {{ display_name }}
+    </a>
+    {% endif %}
+  {% endfor %}
+  <a href="{% url 'news:article-list' %}?category=olahraga%20lain" 
+     class="py-1 px-4 rounded-full text-sm font-medium transition {% if current_category == 'olahraga lain' %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+    Olahraga Lain
+  </a>
+</div>
+
+{# --- CONTAINER UNTUK GRID & PAGINATION YANG AKAN DI-REFRESH --- #}
+<div id="article-list-container">
+    {# Include partial template untuk tampilan awal #}
+    {% include 'news/_article_grid_partial.html' with articles=articles page_obj=page_obj is_paginated=is_paginated %}
+</div>
+
+<script>
+    const refreshButton = document.getElementById('refresh-button');
+    const articleContainer = document.getElementById('article-list-container');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const refreshIcon = document.getElementById('refresh-icon');
+    const refreshText = document.getElementById('refresh-text');
+
+    refreshButton.addEventListener('click', () => {
+        // Tampilkan loading & disable tombol
+        loadingSpinner.classList.remove('hidden');
+        refreshIcon.classList.add('hidden');
+        refreshText.textContent = 'Refreshing...';
+        refreshButton.disabled = true;
+        refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        // Dapatkan URL saat ini (untuk mempertahankan filter kategori)
+        const currentUrl = new URL(window.location.href);
+        
+        // Tambahkan/Update parameter ajax=true
+        currentUrl.searchParams.set('ajax', 'true');
+        // Hapus parameter page agar selalu refresh ke halaman 1
+        currentUrl.searchParams.delete('page'); 
+
+        fetch(currentUrl.toString(), {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Header standar AJAX
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json(); // Kita mengharapkan JSON dari view
+        })
+        .then(data => {
+            // Ganti isi container dengan HTML baru dari response JSON
+            articleContainer.innerHTML = data.html; 
+        })
+        .catch(error => {
+            console.error('Error fetching articles:', error);
+            refreshText.textContent = 'Error!';
+            // Tampilkan pesan error ke user jika perlu
+        })
+        .finally(() => {
+            // Sembunyikan loading & enable tombol lagi
+            loadingSpinner.classList.add('hidden');
+            refreshIcon.classList.remove('hidden');
+            refreshText.textContent = 'Refresh';
+            refreshButton.disabled = false;
+            refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        });
+    });
+</script>
+
+{% endblock %}

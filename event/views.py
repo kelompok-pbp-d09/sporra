@@ -1,16 +1,16 @@
 from event.models import Event
 from event.forms import EventForm
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.core import serializers
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.html import strip_tags
 from django.utils import timezone
+from django.template.defaultfilters import date as date_filter
 
 # Create your views here.
 def home_event(request):
@@ -77,7 +77,48 @@ def edit_event(request, id):
     context = {'form': form, 'event': event}
     return render(request, 'edit_event.html', context)
 
-def delete_item(request, id):
-    item = get_object_or_404(Event, pk=id)
-    item.delete()
+def delete_event(request, id):
+    event = get_object_or_404(Event, pk=id)
+    event.delete()
     return HttpResponseRedirect(reverse('event:home_event'))
+
+def get_events_ajax(request):
+    """AJAX endpoint to get events filtered by category"""
+    category = request.GET.get('category', '')
+    
+    # Get current time
+    now = timezone.now()
+    
+    # Base queryset
+    queryset = Event.objects.all()
+    
+    # Filter by category if provided
+    if category:
+        queryset = queryset.filter(kategori=category)
+    
+    # Separate upcoming and past events
+    upcoming_events = queryset.filter(date__gte=now).order_by('date')
+    past_events = queryset.filter(date__lt=now).order_by('-date')
+    
+    # Serialize events
+    def serialize_event(event):
+        # Use timezone.localtime to convert to local timezone
+        local_date = timezone.localtime(event.date)
+        
+        return {
+            'id': str(event.id),
+            'judul': event.judul,
+            'lokasi': event.lokasi,
+            'harga': str(event.harga),
+            'kategori_display': event.get_kategori_display(),
+            'date_formatted': date_filter(local_date, "d M Y, H:i"),
+            'detail_url': reverse('event:event_detail', args=[event.id]),
+            'user_id': event.user.id if event.user else None
+        }
+    
+    data = {
+        'upcoming_events': [serialize_event(e) for e in upcoming_events],
+        'past_events': [serialize_event(e) for e in past_events]
+    }
+    
+    return JsonResponse(data)
