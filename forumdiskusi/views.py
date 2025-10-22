@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import ForumDiskusi, Post
 from news.models import Article
+from profile_user.models import UserProfile
 
 # Forum bisa diakses tanpa login
 def forum(request, pk):
@@ -48,7 +49,7 @@ def add_comment(request, pk):
 def delete_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     user = request.user
-    is_admin = hasattr(user, 'userprofile') and user.userprofile.is_admin
+    is_admin = hasattr(user, 'userprofile') and user.userprofile.is_admin  # ✅ tetap aman karena model diimport
 
     if post.author == user or is_admin:
         post.delete()
@@ -57,3 +58,33 @@ def delete_comment(request, post_id):
         return redirect('forumdiskusi:forum', pk=post.forum.article.pk)
 
     return JsonResponse({'error': 'Tidak memiliki izin untuk menghapus'}, status=403)
+
+def forum_preview(request):
+    # data dummy untuk testing
+    dummy_article = {
+        'title': 'Contoh Artikel Dummy untuk Preview Forum',
+        'pk': '00000000-0000-0000-0000-000000000000'
+    }
+
+    dummy_comments = [
+        type('Comment', (), {
+            'id': 1,
+            'author': type('User', (), {'username': 'tester'})(),
+            'content': 'Komentar pertama contoh aja.',
+            'created_at': '22 Okt 2025, 18:45'
+        })(),
+        type('Comment', (), {
+            'id': 2,
+            'author': type('User', (), {'username': 'admin'})(),
+            'content': 'Komentar kedua buat testing tampilan forum.',
+            'created_at': '22 Okt 2025, 19:00'
+        })()
+    ]
+
+    context = {
+        'forum': None,
+        'news': dummy_article,
+        'comments': dummy_comments
+    }
+    return render(request, 'forum.html', context)
+

@@ -5,6 +5,11 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto py-10">
+    <p class="text-gray-400 text-sm mb-4 text-center">
+        <a href="{% url 'news:article-detail' news.pk %}" class="hover:underline text-blue-400">
+            ← Kembali ke artikel
+        </a>
+    </p>
     <h1 class="text-3xl font-bold mb-8 text-center text-blue-400">
         Forum Diskusi: {{ news.title }}
     </h1>
@@ -20,7 +25,7 @@
                     <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
                 </div>
 
-                {% if user.is_authenticated and (comment.author == user or user.userprofile.is_admin) %}
+                {% if user.is_authenticated and (comment.author == user or user.userprofile and user.userprofile.role == 'admin') %}
                 <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
                         data-comment-id="{{ comment.id }}">Hapus</button>
                 {% endif %}
@@ -35,7 +40,7 @@
     <div class="text-center">
         {% if user.is_authenticated %}
         <button id="openModal"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition duration-200">
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition-all duration-200">
             Tambah Komentar
         </button>
         {% else %}
@@ -48,8 +53,8 @@
 </div>
 
 <!-- Modal Tambah Komentar -->
-<div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl">
+<div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 backdrop-blur-sm">
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl transform scale-95 transition-all duration-200">
         <h2 class="text-xl font-semibold mb-4 text-white text-center">Tulis Komentar</h2>
         <form id="commentForm">
             {% csrf_token %}
@@ -67,7 +72,7 @@
 </div>
 
 <!-- Modal Konfirmasi Hapus -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 backdrop-blur-sm">
     <div class="bg-gray-800 p-6 rounded-lg w-80 shadow-lg text-center">
         <h2 class="text-xl font-semibold text-white mb-4">Yakin ingin hapus komentar ini?</h2>
         <div class="flex justify-center space-x-3">
@@ -121,11 +126,17 @@ $(document).ready(function() {
     $("#commentForm").submit(function(e) {
         e.preventDefault();
 
+        const content = $("#commentContent").val().trim();
+        if (!content) {
+            showToast("Komentar tidak boleh kosong", "bg-red-600");
+            return;
+        }
+
         $.ajax({
             type: "POST",
             url: "{% url 'forumdiskusi:add_comment' news.pk %}",
             data: {
-                'content': $("#commentContent").val(),
+                'content': content,
                 'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
             },
             success: function(response) {
