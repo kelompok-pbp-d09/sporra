@@ -64,6 +64,10 @@
                  class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 News
               </a>
+              <a href="{% url 'event:home_event' %}" 
+                 class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Events
+              </a>
               <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 Tickets
               </a>
@@ -76,6 +80,11 @@
               <a href="{% url 'news:article-create' %}" 
                  class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Buat Artikel
+              </a>
+
+              <a href="{% url 'event:create_event' %}" 
+                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                Buat Acara
               </a>
               
               <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
