@@ -5,11 +5,28 @@ from django.views.generic import (
     DetailView, 
     CreateView, 
     UpdateView, 
-    DeleteView
+    DeleteView,
+    TemplateView,
 )
 # For security: only logged-in users can create/edit/delete
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Article
+
+
+# --- View Landing page ---
+class LandingPageView(TemplateView):
+    """
+    View untuk menampilkan landing page utama di root '/'.
+    """
+    template_name = 'landing.html'
+    
+    # --- LOGIKA UNTUK 'hottest_articles' HARUSNYA ADA DI SINI ---
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Mengambil 3 artikel TERBARU (lebih baik untuk situs baru)
+        context['hottest_articles'] = Article.objects.order_by('-created_at')[:3]
+        return context
+
 
 # --- READ Views ---
 
@@ -23,6 +40,17 @@ class ArticleListView(ListView):
     template_name = 'news/article_list.html'  # You need to create this template
     context_object_name = 'articles'
     paginate_by = 10  # Shows 10 articles per page
+    
+    def get_context_data(self, **kwargs):
+        # 1. Panggil implementasi super()
+        context = super().get_context_data(**kwargs)
+        
+        # 2. Ambil data artikel
+        # Kita ambil 3 artikel, diurutkan dari views terbanyak
+        context['hottest_articles'] = Article.objects.order_by('-news_views')[:3]
+        
+        # 3. Kirim kembali context-nya
+        return context
 
     def get_queryset(self):
         # Start with all articles
@@ -38,12 +66,15 @@ class ArticleListView(ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
-        # This adds the list of categories to the context
-        # so you can build filter links in your template
-        context = super().get_context_data(**kwargs)
-        context['categories'] = Article.CATEGORY_CHOICES
-        context['current_category'] = self.request.GET.get('category')
-        return context
+            # Panggil implementasi super() dulu
+            context = super().get_context_data(**kwargs)
+            
+            # Tambahkan data untuk filter kategori
+            context['categories'] = Article.CATEGORY_CHOICES
+            context['current_category'] = self.request.GET.get('category')
+            
+            # (Logika 'hottest_articles' sudah DIHAPUS dari sini)
+            return context
 
 
 class ArticleDetailView(DetailView):
