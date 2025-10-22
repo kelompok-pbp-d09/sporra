@@ -1,7 +1,7 @@
-from main.views import home_event, event_detail, create_event, edit_event
+from event.views import home_event, event_detail, create_event, edit_event
 from django.urls import path
 
-app_name = 'main'
+app_name = 'event'
 
 urlpatterns = [
     path('', home_event, name='home_event'),

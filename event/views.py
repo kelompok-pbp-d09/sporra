@@ -1,5 +1,5 @@
-from main.models import Event
-from main.forms import EventForm
+from event.models import Event
+from event.forms import EventForm
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.core import serializers
@@ -56,7 +56,7 @@ def create_event(request):
         event_entry = form.save(commit=False)
         event_entry.user = request.user if request.user.is_authenticated else None
         event_entry.save()
-        return redirect('main:home_event')
+        return redirect('event:home_event')
     context = {'form': form}
     return render(request, 'create_event.html', context)
 
@@ -68,7 +68,7 @@ def edit_event(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, "Event berhasil diperbarui!")
-            return redirect('main:home_event')
+            return redirect('event:home_event')
     else:
         local_time = timezone.localtime(event.date)
         formatted_date = local_time.strftime("%d %B %Y %H.%M")

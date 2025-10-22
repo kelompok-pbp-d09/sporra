@@ -2,7 +2,7 @@ from django import forms
 from django.utils.html import strip_tags
 from datetime import datetime
 from django.utils import timezone
-from main.models import Event
+from event.models import Event
 
 class EventForm(forms.ModelForm):
     date = forms.CharField(

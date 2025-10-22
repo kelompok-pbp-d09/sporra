@@ -9,7 +9,7 @@
 
 <!-- Back Navigation -->
 <div class="mb-6">
-  <a href="{% url 'main:home_event' %}" 
+  <a href="{% url 'event:home_event' %}" 
      class="font-custom1 fixed top-24 left-6 z-50 flex items-center space-x-2 backdrop-blur-md bg-gray-700/80 text-gray-300 hover:bg-blue-600 hover:text-white transition-all px-4 py-2 rounded-full shadow-md font-medium">
     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -43,7 +43,7 @@
     <p class="mt-4 text-red-400 font-semibold text-center">Acara ini telah selesai. Terima kasih atas ketertarikannya!</p>
   {% else %}
     <div class="flex justify-center mt-6">
-      <a href="{% url 'main:create_event' %}">
+      <a href="{% url 'event:create_event' %}">
         <button class="bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
           Daftar
         </button>
@@ -61,7 +61,7 @@
   </p>
 
   <!-- Edit -->
-  <a href="{% url 'main:edit_event' event.id %}">
+  <a href="{% url 'event:edit_event' event.id %}">
     <button class="mt-4 bg-gray-600 hover:bg-gray-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
       Edit Event
     </button>
