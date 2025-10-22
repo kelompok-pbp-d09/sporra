@@ -9,3 +9,4 @@ pillow
 requests
 beautifulsoup4
 coverage
+pytz
