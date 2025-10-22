@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 
 # Model ini menghubungkan forum ke satu news tertentu
 class ForumDiskusi(models.Model):
-    news = models.ForeignKey('news.News', on_delete=models.CASCADE, related_name='forum_diskusi')
+    article = models.ForeignKey('news.Article', on_delete=models.CASCADE, related_name='forum_diskusi')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Forum Diskusi untuk: {self.news.title}"
+        return f"Forum Diskusi untuk: {self.Article.title}"
 
 
 # Setiap postingan yang muncul di forum diskusi
