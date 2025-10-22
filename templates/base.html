@@ -14,21 +14,109 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white ">
+<!doctype html>
+<html lang="en" class="dark"> <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SPORRA - Sports News</title>
+    
+    {% load static %}
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      // Kustomisasi Tailwind untuk dark mode typography
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            typography: ({ theme }) => ({
+              DEFAULT: {
+                css: {
+                  '--tw-prose-body': theme('colors.gray[300]'),
+                  '--tw-prose-headings': theme('colors.white'),
+                  '--tw-prose-links': theme('colors.blue[400]'),
+                  '--tw-prose-bold': theme('colors.white'),
+                  '--tw-prose-hr': theme('colors.gray[700]'),
+                  '--tw-prose-quotes': theme('colors.gray[100]'),
+                  '--tw-prose-quote-borders': theme('colors.gray[700]'),
+                },
+              },
+            }),
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-gray-900 text-gray-200 antialiased min-h-screen flex flex-col">
 
-    <nav class="bg-gray-800 p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold">SportsConnect</a>
-            <div class="hidden md:flex items-center space-x-4">
-                <a href="#" class="hover:text-blue-400">Home</a>
+    <nav class="bg-gray-800 shadow-lg sticky top-0 z-50">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          
+          <div class="flex items-center space-x-6">
+            <a href="{% url 'landing-page' %}" class="text-2xl font-bold text-white">
+              SPORRA
+            </a>
+            
+            <div class="hidden md:flex space-x-4">
+              <a href="{% url 'news:article-list' %}" 
+                 class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                News
+              </a>
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Tickets
+              </a>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-3">
+            {% if user.is_authenticated %}
+              
+              <a href="{% url 'news:article-create' %}" 
+                 class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                Buat Artikel
+              </a>
+              
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Profile
+              </a>
+              
+              <form action="{% url 'profile_user:logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="bg-gray-700 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                  Logout
+                </button>
+              </form>
+
+            {% else %}
+              
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Register
+              </a>
+              
+              <a href="{% url 'profile_user:login' %}" 
+                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                Login
+              </a>
+            {% endif %}
+            
             </div>
         </div>
+      </div>
     </nav>
 
-    <main class="container mx-auto p-8">
-        {% block content %}
-        <!-- App-specific content will be injected here -->
-        {% endblock %}
+    <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8 flex-grow">
+      {% block content %}
+      {% endblock %}
     </main>
 
-</body>
+    <footer class="bg-gray-800 shadow-inner mt-12">
+      <div class="container mx-auto px-6 py-4 text-center text-gray-500">
+        &copy; {% now "Y" %} SPORRA. All rights reserved.
+      </div>
+    </footer>
+
+  </body>
 </html>

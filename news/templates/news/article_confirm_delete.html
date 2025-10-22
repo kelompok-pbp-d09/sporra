@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+
+    <h2 class="text-2xl font-bold text-white mb-4">Konfirmasi Hapus</h2>
+    <hr class="border-gray-700 my-4">
+    
+    <p class="text-lg text-gray-300 mb-3">
+      Apakah kamu yakin ingin menghapus artikel:
+    </p>
+    
+    <h3 class="text-xl font-semibold text-yellow-400 mb-6">
+      "{{ object.title }}"?
+    </h3>
+    
+    <p class="text-red-400 mb-6">
+      Tindakan ini tidak bisa dibatalkan.
+    </p>
+    
+    <form method="POST" class="flex justify-center gap-4">
+      {% csrf_token %}
+      <button type="submit" 
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition duration-150">
+        Ya, Hapus
+      </button>
+      <a href="{{ object.get_absolute_url }}" 
+         class="bg-gray-600 hover:bg-gray-500 text-gray-200 font-medium py-2 px-6 rounded-lg transition duration-150">
+        Batal
+      </a>
+    </form>
+    
+  </div>
+</div>
+{% endblock %}
