@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import F
 from django.urls import reverse
+from django.utils import timezone
 
 class Article(models.Model):
     
@@ -35,7 +36,9 @@ class Article(models.Model):
     )
     
     news_views = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    created_at = models.DateTimeField(default=timezone.now)
     
     class Meta:
         ordering = ['-created_at']
@@ -48,6 +51,8 @@ class Article(models.Model):
 
     @property
     def is_news_hot(self):
+        if self.created_at:
+            return (timezone.now() - self.created_at).days <= 2 and self.news_views > 10
         return self.news_views > 20
         
     def increment_views(self):
