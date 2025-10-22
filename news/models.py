@@ -20,17 +20,13 @@ class Article(models.Model):
     content = models.TextField()
     thumbnail = models.URLField(blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='sepakbola')
-    
-    # --- THIS IS THE KEY CHANGE ---
-    # We make the author nullable.
-    # on_delete=models.SET_NULL means if the author User is deleted,
-    # this field becomes Null (the article isn't deleted).
+
     
     author = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
-        null=True,  # Allows the field to be NULL in the database
-        blank=True, # Allows the field to be blank in forms
+        null=True,
+        blank=True,
         related_name='articles'
     )
     
