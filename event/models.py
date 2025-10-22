@@ -7,10 +7,12 @@ class Event(models.Model):
     CATEGORY_CHOICES = [
         ('basket', 'Basket'),
         ('tennis', 'Tennis'),
-        ('padel', 'Padel'),
-        ('badminton', 'Badminton'),
-        ('cricket', 'Cricket'),
-        ('volleyball', 'Volleyball'),
+        ('bulu tangkis', 'Bulu Tangkis'),
+        ('volley', 'Volley'),
+        ('futsal', 'Futsal'),
+        ('sepak bola', 'Sepak Bola'),
+        ('renang', 'Renang'),
+        ('lainnya', 'Lainnya'),
     ]
     
     title = models.CharField(max_length=255)

@@ -76,3 +76,8 @@ def edit_event(request, id):
 
     context = {'form': form, 'event': event}
     return render(request, 'edit_event.html', context)
+
+def delete_item(request, id):
+    item = get_object_or_404(Event, pk=id)
+    item.delete()
+    return HttpResponseRedirect(reverse('event:home_event'))
