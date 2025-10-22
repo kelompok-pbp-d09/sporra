@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %} {% block content %}
   <div class="relative text-center py-24 md:py-40" 
-       style="background-image: url('{% static 'images/your-stadium-image.jpg' %}')"> <div class="absolute inset-0 bg-gray-900 opacity-70"></div>
+      style="background-image: url('{% static 'images/your-stadium-image.jpg' %}')"> <div class="absolute inset-0 bg-gray-900 opacity-70"></div>
     
     <div class="relative z-10 max-w-3xl mx-auto px-4">
       
@@ -16,7 +16,7 @@
       <div class="mt-10 flex flex-wrap justify-center gap-4 md:gap-6">
         
         <a href="{% url 'news:article-list' %}"
-           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg 
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg 
                   transition duration-200 ease-in-out transform hover:scale-105">
           Browse News
         </a>
@@ -42,7 +42,7 @@
         <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
           {% if article.thumbnail %}
             <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
-                 class="h-48 w-full object-cover">
+                class="h-48 w-full object-cover">
           {% endif %}
           
           <div class="p-5 flex flex-col flex-grow">
