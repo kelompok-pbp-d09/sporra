@@ -36,9 +36,10 @@
       <hr class="border-gray-700 my-4">
     {% endif %}
     
-    {% if article.thumbnail %}
-      <img src="{{ article.thumbnail }}" alt="{{ article.title }}" class="w-full rounded-lg mb-6">
-    {% endif %}
+      {% if article.thumbnail %}
+      <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
+           class="w-full max-h-[500px] object-cover rounded-lg mb-6">
+      {% endif %}
     
     <div class="prose prose-lg max-w-none text-gray-300">
       {{ article.content|linebreaks }}
@@ -49,5 +50,12 @@
        class="inline-block bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium py-2 px-4 rounded-lg transition duration-150">
       &larr; Kembali ke Daftar Berita
     </a>
+
+    <!-- Button buat ke thread TAMBAHIN LINK DISINI -->
+    <a href="LINK THREAD DISINI" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-150">
+        Lihat Diskusi &rarr;
+      </a>
+    </div>
+    
   </article>
 {% endblock %}

@@ -5,9 +5,8 @@ from .models import ForumDiskusi, Post
 from news.models import Article
 
 # Forum bisa diakses tanpa login
-def forum(request, slug):
-    article = get_object_or_404(Article, slug=slug)
-
+def forum(request, pk):
+    article = get_object_or_404(Article, pk=pk)
     forum, created = ForumDiskusi.objects.get_or_create(article=article)
     comments = forum.posts.all().order_by('-created_at')
 
@@ -18,9 +17,10 @@ def forum(request, slug):
     }
     return render(request, 'forum.html', context)
 
+
 @login_required
-def add_comment(request, slug):
-    article = get_object_or_404(Article, slug=slug)
+def add_comment(request, pk):
+    article = get_object_or_404(Article, pk=pk)
     forum, _ = ForumDiskusi.objects.get_or_create(article=article)
 
     if request.method == 'POST':
@@ -43,6 +43,7 @@ def add_comment(request, slug):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+
 @login_required
 def delete_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -53,6 +54,6 @@ def delete_comment(request, post_id):
         post.delete()
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
-        return redirect('forumdiskusi:forum', slug=post.forum.article.slug)
+        return redirect('forumdiskusi:forum', pk=post.forum.article.pk)
 
     return JsonResponse({'error': 'Tidak memiliki izin untuk menghapus'}, status=403)

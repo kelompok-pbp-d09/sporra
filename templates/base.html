@@ -2,36 +2,28 @@
 <html lang="en" class="dark"> <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SPORRA</title>
+    <title>SPORRA - Sports News</title>
+    
+    {% load static %}
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
-      // Kustomisasi Tailwind (opsional, tapi bagus untuk dark mode)
+      // Kustomisasi Tailwind untuk dark mode typography
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
-            // Ini akan membuat styling 'prose' (konten artikel)
-            // terlihat bagus di dark mode
             typography: ({ theme }) => ({
               DEFAULT: {
                 css: {
                   '--tw-prose-body': theme('colors.gray[300]'),
                   '--tw-prose-headings': theme('colors.white'),
-                  '--tw-prose-lead': theme('colors.gray[400]'),
                   '--tw-prose-links': theme('colors.blue[400]'),
                   '--tw-prose-bold': theme('colors.white'),
-                  '--tw-prose-counters': theme('colors.gray[400]'),
-                  '--tw-prose-bullets': theme('colors.gray[600]'),
                   '--tw-prose-hr': theme('colors.gray[700]'),
                   '--tw-prose-quotes': theme('colors.gray[100]'),
                   '--tw-prose-quote-borders': theme('colors.gray[700]'),
-                  '--tw-prose-captions': theme('colors.gray[400]'),
-                  '--tw-prose-code': theme('colors.white'),
-                  '--tw-prose-pre-code': theme('colors.gray[300]'),
-                  '--tw-prose-pre-bg': theme('colors.gray[800]'),
-                  '--tw-prose-th-borders': theme('colors.gray[600]'),
-                  '--tw-prose-td-borders': theme('colors.gray[700]'),
                 },
               },
             }),
@@ -40,46 +32,75 @@
       }
     </script>
   </head>
-  <body class="bg-gray-900 text-gray-200 antialiased">
+  <body class="bg-gray-900 text-gray-200 antialiased min-h-screen flex flex-col">
 
-    <nav class="bg-gray-800 shadow-lg">
+    <nav class="bg-gray-800 shadow-lg sticky top-0 z-50">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-          <div class="flex-shrink-0">
-            <a href="{% url 'news:article-list' %}" class="text-2xl font-bold text-white">
+          
+          <div class="flex items-center space-x-6">
+            <a href="{% url 'landing-page' %}" class="text-2xl font-bold text-white">
               SPORRA
             </a>
+            
+            <div class="hidden md:flex space-x-4">
+              <a href="{% url 'news:article-list' %}" 
+                 class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                News
+              </a>
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Tickets
+              </a>
+            </div>
           </div>
           
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-3">
             {% if user.is_authenticated %}
-              <span class="text-gray-300">Halo, {{ user.username }}!</span>
+              
               <a href="{% url 'news:article-create' %}" 
-                 class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                 class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Buat Artikel
               </a>
+              
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Profile
+              </a>
+              
               <form action="{% url 'profile_user:logout' %}" method="post" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" 
-                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                        class="bg-gray-700 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                   Logout
                 </button>
               </form>
+
             {% else %}
+              
+              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Register
+              </a>
+              
               <a href="{% url 'profile_user:login' %}" 
-                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Login
               </a>
             {% endif %}
-          </div>
+            
+            </div>
         </div>
       </div>
     </nav>
 
-    <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+    <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8 flex-grow">
       {% block content %}
       {% endblock %}
     </main>
+
+    <footer class="bg-gray-800 shadow-inner mt-12">
+      <div class="container mx-auto px-6 py-4 text-center text-gray-500">
+        &copy; {% now "Y" %} SPORRA. All rights reserved.
+      </div>
+    </footer>
 
   </body>
 </html>

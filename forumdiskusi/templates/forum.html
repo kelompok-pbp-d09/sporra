@@ -4,57 +4,63 @@
 {% block title %}Forum Diskusi{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">Forum Diskusi</h1>
+<div class="max-w-3xl mx-auto py-10">
+    <h1 class="text-3xl font-bold mb-8 text-center text-blue-400">
+        Forum Diskusi: {{ news.title }}
+    </h1>
 
     <!-- Daftar komentar -->
-    <div id="comment-list" class="space-y-4 mb-8">
+    <div id="comment-list" class="space-y-4 mb-10">
         {% for comment in comments %}
-        <div class="p-4 bg-gray-800 rounded-lg" id="comment-{{ comment.id }}">
+        <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-{{ comment.id }}">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
-                    <p class="text-gray-300">{{ comment.content }}</p>
-                    <p class="text-sm text-gray-500">{{ comment.created_at|date:"d M Y, H:i" }}</p>
+                    <p class="text-gray-200 whitespace-pre-line">{{ comment.content }}</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
                 </div>
 
                 {% if user.is_authenticated and (comment.author == user or user.userprofile.is_admin) %}
-                <button class="delete-btn text-red-500 hover:text-red-600 text-sm"
+                <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
                         data-comment-id="{{ comment.id }}">Hapus</button>
                 {% endif %}
             </div>
         </div>
         {% empty %}
-        <p class="text-gray-400 text-center">Belum ada komentar. Jadilah yang pertama!</p>
+        <p class="text-gray-400 text-center italic">Belum ada komentar. Jadilah yang pertama!</p>
         {% endfor %}
     </div>
 
-    <!-- Tombol buka modal -->
+    <!-- Tombol tambah komentar -->
     <div class="text-center">
         {% if user.is_authenticated %}
-        <button id="openModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+        <button id="openModal"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition duration-200">
             Tambah Komentar
         </button>
         {% else %}
-        <p class="text-gray-400">Silakan <a href="{% url 'login' %}" class="text-blue-400 hover:underline">login</a> untuk menulis komentar.</p>
+        <p class="text-gray-400">
+            Silakan <a href="{% url 'profile_user:login' %}" class="text-blue-400 hover:underline">login</a>
+            untuk menulis komentar.
+        </p>
         {% endif %}
     </div>
 </div>
 
 <!-- Modal Tambah Komentar -->
 <div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-lg">
-        <h2 class="text-xl font-semibold mb-4 text-white">Tulis Komentar</h2>
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl">
+        <h2 class="text-xl font-semibold mb-4 text-white text-center">Tulis Komentar</h2>
         <form id="commentForm">
             {% csrf_token %}
             <textarea id="commentContent" name="content" rows="4"
-                class="w-full p-2 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                class="w-full p-3 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
                 placeholder="Tulis komentar kamu di sini..."></textarea>
             <div class="flex justify-end space-x-2">
                 <button type="button" id="closeModal"
-                    class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-white transition">Batal</button>
+                    class="bg-gray-600 hover:bg-gray-700 px-4 py-1 rounded text-white transition">Batal</button>
                 <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white transition">Kirim</button>
+                    class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-white transition">Kirim</button>
             </div>
         </form>
     </div>
@@ -63,10 +69,12 @@
 <!-- Modal Konfirmasi Hapus -->
 <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
     <div class="bg-gray-800 p-6 rounded-lg w-80 shadow-lg text-center">
-        <h2 class="text-xl font-semibold text-white mb-4">Yakin hapus komentar ini?</h2>
+        <h2 class="text-xl font-semibold text-white mb-4">Yakin ingin hapus komentar ini?</h2>
         <div class="flex justify-center space-x-3">
-            <button id="cancelDelete" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-1 rounded">Batal</button>
-            <button id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Hapus</button>
+            <button id="cancelDelete"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-1 rounded transition">Batal</button>
+            <button id="confirmDelete"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition">Hapus</button>
         </div>
     </div>
 </div>
@@ -100,7 +108,7 @@ $(document).ready(function() {
     });
 
     // fungsi toast
-    function showToast(message, colorClass="bg-green-600") {
+    function showToast(message, colorClass = "bg-green-600") {
         const toast = $("#toast");
         toast.removeClass("hidden bg-green-600 bg-red-600").addClass(colorClass);
         toast.text(message);
@@ -115,21 +123,21 @@ $(document).ready(function() {
 
         $.ajax({
             type: "POST",
-            url: "{% url 'forumdiskusi:add_comment' news.id %}",
+            url: "{% url 'forumdiskusi:add_comment' news.pk %}",
             data: {
                 'content': $("#commentContent").val(),
                 'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
             },
             success: function(response) {
                 $("#comment-list").prepend(`
-                    <div class="p-4 bg-gray-800 rounded-lg" id="comment-${response.id}">
+                    <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-${response.id}">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-semibold text-blue-300">${response.username}</p>
-                                <p class="text-gray-300">${response.content}</p>
-                                <p class="text-sm text-gray-500">${response.created_at}</p>
+                                <p class="text-gray-200 whitespace-pre-line">${response.content}</p>
+                                <p class="text-sm text-gray-500 mt-1">${response.created_at}</p>
                             </div>
-                            <button class="delete-btn text-red-500 hover:text-red-600 text-sm"
+                            <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
                                     data-comment-id="${response.id}">Hapus</button>
                         </div>
                     </div>
