@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Forum Diskusi{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">Forum Diskusi</h1>
+
+    <!-- Daftar komentar -->
+    <div id="comment-list" class="space-y-4 mb-8">
+        {% for comment in comments %}
+        <div class="p-4 bg-gray-800 rounded-lg" id="comment-{{ comment.id }}">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
+                    <p class="text-gray-300">{{ comment.content }}</p>
+                    <p class="text-sm text-gray-500">{{ comment.created_at|date:"d M Y, H:i" }}</p>
+                </div>
+
+                {% if user.is_authenticated and (comment.author == user or user.userprofile.is_admin) %}
+                <button class="delete-btn text-red-500 hover:text-red-600 text-sm"
+                        data-comment-id="{{ comment.id }}">Hapus</button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-400 text-center">Belum ada komentar. Jadilah yang pertama!</p>
+        {% endfor %}
+    </div>
+
+    <!-- Tombol buka modal -->
+    <div class="text-center">
+        {% if user.is_authenticated %}
+        <button id="openModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+            Tambah Komentar
+        </button>
+        {% else %}
+        <p class="text-gray-400">Silakan <a href="{% url 'login' %}" class="text-blue-400 hover:underline">login</a> untuk menulis komentar.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Tambah Komentar -->
+<div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-white">Tulis Komentar</h2>
+        <form id="commentForm">
+            {% csrf_token %}
+            <textarea id="commentContent" name="content" rows="4"
+                class="w-full p-2 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="Tulis komentar kamu di sini..."></textarea>
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="closeModal"
+                    class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-white transition">Batal</button>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white transition">Kirim</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-gray-800 p-6 rounded-lg w-80 shadow-lg text-center">
+        <h2 class="text-xl font-semibold text-white mb-4">Yakin hapus komentar ini?</h2>
+        <div class="flex justify-center space-x-3">
+            <button id="cancelDelete" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-1 rounded">Batal</button>
+            <button id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast"
+    class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-500 opacity-0 z-50">
+    Komentar berhasil ditambahkan!
+</div>
+
+<!-- jQuery buat AJAX -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    let commentToDelete = null;
+
+    // buka/tutup modal tambah komentar
+    $("#openModal").click(() => $("#commentModal").removeClass("hidden"));
+    $("#closeModal").click(() => $("#commentModal").addClass("hidden"));
+
+    // buka modal konfirmasi hapus
+    $(document).on("click", ".delete-btn", function() {
+        commentToDelete = $(this).data("comment-id");
+        $("#deleteModal").removeClass("hidden");
+    });
+
+    // batal hapus
+    $("#cancelDelete").click(() => {
+        commentToDelete = null;
+        $("#deleteModal").addClass("hidden");
+    });
+
+    // fungsi toast
+    function showToast(message, colorClass="bg-green-600") {
+        const toast = $("#toast");
+        toast.removeClass("hidden bg-green-600 bg-red-600").addClass(colorClass);
+        toast.text(message);
+        setTimeout(() => toast.removeClass("opacity-0"), 100);
+        setTimeout(() => toast.addClass("opacity-0"), 3000);
+        setTimeout(() => toast.addClass("hidden"), 3500);
+    }
+
+    // submit komentar via AJAX
+    $("#commentForm").submit(function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            type: "POST",
+            url: "{% url 'forumdiskusi:add_comment' news.id %}",
+            data: {
+                'content': $("#commentContent").val(),
+                'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
+            },
+            success: function(response) {
+                $("#comment-list").prepend(`
+                    <div class="p-4 bg-gray-800 rounded-lg" id="comment-${response.id}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-blue-300">${response.username}</p>
+                                <p class="text-gray-300">${response.content}</p>
+                                <p class="text-sm text-gray-500">${response.created_at}</p>
+                            </div>
+                            <button class="delete-btn text-red-500 hover:text-red-600 text-sm"
+                                    data-comment-id="${response.id}">Hapus</button>
+                        </div>
+                    </div>
+                `);
+                $("#commentContent").val("");
+                $("#commentModal").addClass("hidden");
+                showToast("Komentar berhasil ditambahkan!");
+            },
+            error: function() {
+                showToast("Gagal menambahkan komentar 😢", "bg-red-600");
+            }
+        });
+    });
+
+    // hapus komentar via AJAX
+    $("#confirmDelete").click(function() {
+        if (!commentToDelete) return;
+
+        $.ajax({
+            type: "POST",
+            url: `/forumdiskusi/delete_comment/${commentToDelete}/`,
+            data: {
+                'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
+            },
+            success: function() {
+                $(`#comment-${commentToDelete}`).remove();
+                showToast("Komentar berhasil dihapus!");
+                $("#deleteModal").addClass("hidden");
+            },
+            error: function() {
+                showToast("Gagal menghapus komentar 😢", "bg-red-600");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
