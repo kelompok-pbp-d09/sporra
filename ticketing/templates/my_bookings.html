@@ -1,0 +1,21 @@
+
+{% block content %}
+<h1>Tiket Saya</h1>
+
+{% if bookings %}
+  <ul>
+  {% for booking in bookings %}
+    <li>
+      Event: {{ booking.ticket.event.name }}<br>
+      Jenis: {{ booking.ticket.ticket_type|title }}<br>
+      Jumlah: {{ booking.quantity }}<br>
+      Dipesan pada: {{ booking.booked_at|date:"d M Y H:i" }}
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>Kamu belum memesan tiket apapun.</p>
+{% endif %}
+
+<a href="/ticketing/event/">Kembali</a>
+{% endblock %}
