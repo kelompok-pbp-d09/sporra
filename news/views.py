@@ -11,6 +11,8 @@ from django.views.generic import (
 # For security: only logged-in users can create/edit/delete
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Article
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 
 # --- View Landing page ---
@@ -31,50 +33,53 @@ class LandingPageView(TemplateView):
 # --- READ Views ---
 
 class ArticleListView(ListView):
-    """
-    Shows a list of all articles.
-    Also handles filtering by category based on a URL query parameter.
-    e.g., /articles?category=f1
-    """
     model = Article
-    template_name = 'news/article_list.html'  # You need to create this template
+    template_name = 'news/article_list.html' 
     context_object_name = 'articles'
-    paginate_by = 10  # Shows 10 articles per page
-    
-    def get_context_data(self, **kwargs):
-        # 1. Panggil implementasi super()
-        context = super().get_context_data(**kwargs)
-        
-        # 2. Ambil data artikel
-        # Kita ambil 3 artikel, diurutkan dari views terbanyak
-        context['hottest_articles'] = Article.objects.order_by('-news_views')[:3]
-        
-        # 3. Kirim kembali context-nya
-        return context
+    # --- UBAH INI JADI 9 ---
+    paginate_by = 9 
 
     def get_queryset(self):
-        # Start with all articles
-        queryset = super().get_queryset()
-        
-        # Get the category from the URL (e.g., ?category=sepakbola)
+        queryset = super().get_queryset().order_by('-created_at') # Selalu urutkan terbaru
         category = self.request.GET.get('category')
-        
         if category:
-            # If a category is provided, filter the queryset
             queryset = queryset.filter(category=category)
-            
         return queryset
 
     def get_context_data(self, **kwargs):
-            # Panggil implementasi super() dulu
-            context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Article.CATEGORY_CHOICES
+        context['current_category'] = self.request.GET.get('category')
+        return context
+
+    # --- TAMBAHKAN ATAU MODIFIKASI METHOD GET INI ---
+    def get(self, request, *args, **kwargs):
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true'
+
+        if is_ajax:
+
+            self.object_list = self.get_queryset()
+
+            paginator = self.get_paginator(self.object_list, self.paginate_by)
+            page_obj = paginator.get_page(1)
             
-            # Tambahkan data untuk filter kategori
-            context['categories'] = Article.CATEGORY_CHOICES
-            context['current_category'] = self.request.GET.get('category')
-            
-            # (Logika 'hottest_articles' sudah DIHAPUS dari sini)
-            return context
+            context = {
+                'articles': page_obj.object_list,
+                'page_obj': page_obj, 
+                'is_paginated': page_obj.has_other_pages(),
+
+            }
+
+            html = render_to_string(
+                'news/_article_grid_partial.html',
+                context,
+                request=request
+            )
+            # Kirim HTML sebagai JSON response
+            return JsonResponse({'html': html})
+        else:
+            # Jika BUKAN AJAX, lanjutkan seperti biasa (render halaman penuh)
+            return super().get(request, *args, **kwargs)
 
 
 class ArticleDetailView(DetailView):

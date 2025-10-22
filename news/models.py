@@ -11,7 +11,8 @@ class Article(models.Model):
         ('sepakbola', 'Sepakbola'),
         ('f1', 'F1'),
         ('moto gp', 'Moto GP'),
-        ('bulu tangkis', 'Bulu Tangkis')
+        ('raket', 'Raket'),
+        ('olahraga lain', 'Olahraga Lain')
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
