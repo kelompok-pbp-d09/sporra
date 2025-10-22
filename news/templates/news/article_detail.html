@@ -34,7 +34,7 @@
         <span>Dilihat: {{ article.news_views }} kali</span>
       </div>
 
-      {% if user.is_authenticated and user == article.author %}
+      {% if user.is_authenticated and user == article.author or user.is_superuser %}
       <div class="border-t border-b border-gray-700 py-4 my-6 flex flex-wrap gap-3">
           <a href="{% url 'news:article-update' article.id %}" 
              class="inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">

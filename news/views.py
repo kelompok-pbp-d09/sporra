@@ -105,7 +105,7 @@ class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         article = self.get_object()
-        return self.request.user == article.author
+        return self.request.user == article.author or self.request.user.is_superuser
 
 
 # --- DELETE View ---
@@ -118,4 +118,4 @@ class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         # This test ensures only the author can delete
         article = self.get_object()
-        return self.request.user == article.author
+        return self.request.user == article.author or self.request.user.is_superuser
