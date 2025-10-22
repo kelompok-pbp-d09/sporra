@@ -20,9 +20,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
-urlpatterns = [
+urlpatterns = [ 
     path('admin/', admin.site.urls),
     path('ticketing/', include('ticketing.urls')),
+    path('profile_user/', include('profile_user.urls')),
+    
 ]
 
 if settings.DEBUG:
