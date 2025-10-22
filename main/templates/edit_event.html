@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block meta %}
-<title>Create Event</title>
+<title>Edit Event - Sporra</title>
 {% endblock meta %}
 
 {% block content %}
@@ -30,8 +30,8 @@
     <!-- Form -->
     <div class="rounded-2xl border border-gray-700 p-6 sm:p-8 font-custom1 bg-gray-800/90 backdrop-blur-sm shadow-2xl relative z-10">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-white mb-2">Add New Event</h1>
-        <p class="text-gray-400">Create and share your event with the community</p>
+        <h1 class="text-3xl font-bold text-white mb-2">Edit Event</h1>
+        <p class="text-gray-400">Update the details for your event</p>
       </div>
 
       <form method="POST" class="space-y-6">
@@ -55,67 +55,55 @@
 
         <!-- Custom field styling -->
         <style>
-          /* Base input styles */
+          /* Base styles untuk semua input, textarea, dan select */
           form input,
           form textarea,
           form select {
               width: 100%;
               padding: 0.75rem 1rem;
               border-radius: 0.5rem;
-              border: 1px solid #4b5563;
-              background-color: #374151 !important;
+              border: 1px solid #4b5563; /* border-gray-600 */
+              background-color: #374151 !important; /* bg-gray-700 */
               color: white !important;
-              caret-color: white !important;
-              transition: all 0.2s;
+              caret-color: white !important; /* Kursor ketik jadi putih */
+              transition: border-color 0.2s, box-shadow 0.2s;
           }
 
-          /* Focus state */
+          /* Style saat field di-fokus (diklik) */
           form input:focus,
           form textarea:focus,
           form select:focus {
               outline: none;
+              border-color: #2563eb; /* border-blue-600 */
               box-shadow: 0 0 0 2px #2563eb;
-              border-color: transparent;
-              background-color: #374151 !important;
-              color: white !important;
               caret-color: white !important;
           }
-
-          /* Textarea height */
+          
+          /* Atur tinggi minimal untuk textarea */
           form textarea {
-              min-height: 100px;
+              min-height: 120px;
           }
 
-          /* Dropdown options */
+          /* Style untuk opsi di dalam dropdown/select */
           form select option {
-              background-color: #374151;
+              background-color: #374151; /* bg-gray-700 */
               color: white;
-              padding: 0.5rem;
           }
 
-          /* Date/time picker icon */
+          /* Style untuk ikon kalender pada input date/time agar putih */
           form input[type="date"]::-webkit-calendar-picker-indicator,
           form input[type="time"]::-webkit-calendar-picker-indicator,
           form input[type="datetime-local"]::-webkit-calendar-picker-indicator {
               filter: invert(1);
           }
 
-          /* Force all text to stay white */
-          form input,
-          form textarea,
-          form select {
-              color: white !important;
-              caret-color: white !important;
-          }
-
-          /* Chrome/Edge autofill fix */
+          /* Solusi Autofill untuk Chrome/Edge/Safari */
           form input:-webkit-autofill,
           form input:-webkit-autofill:hover,
           form input:-webkit-autofill:focus,
           form input:-webkit-autofill:active {
-              -webkit-box-shadow: 0 0 0 1000px #374151 inset !important;
               -webkit-text-fill-color: white !important;
-              color: white !important;
+              -webkit-box-shadow: 0 0 0 30px #374151 inset !important;
               caret-color: white !important;
               transition: background-color 5000s ease-in-out 0s;
           }
@@ -123,7 +111,7 @@
 
         <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-700">
           <button type="submit" class="order-1 sm:order-2 flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
-            Add Event
+            Update Event
           </button>
         </div>
       </form>

@@ -7,5 +7,5 @@ urlpatterns = [
     path('', home_event, name='home_event'),
     path('event/<uuid:id>/', event_detail, name='event_detail'),
     path('create-event/', create_event, name='create_event'),
-    path('event/<uuid:id>/edit/', edit_event, name='edit_event'),
+    path('event/<str:id>/edit/', edit_event, name='edit_event'),
 ]

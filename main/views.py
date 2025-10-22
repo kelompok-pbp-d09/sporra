@@ -14,11 +14,23 @@ from django.utils import timezone
 
 # Create your views here.
 def home_event(request):
-    event_list = Event.objects.all()
+    current_time = timezone.localtime(timezone.now())
+    category = request.GET.get("category")
+    if category:
+        events = Event.objects.filter(category=category)
+    else:
+        events = Event.objects.all()
+
+    upcoming_events = events.filter(date__gte=current_time).order_by("date")
+    past_events = events.filter(date__lt=current_time).order_by("-date")
+
     context = {
-        'event_list': event_list
+        "categories": Event.CATEGORY_CHOICES,
+        "current_category": category,
+        "upcoming_events": upcoming_events,
+        "past_events": past_events,
     }
-    return render(request, 'home_event.html', context)
+    return render(request, "home_event.html", context)
 
 def event_detail(request, id):
     event = get_object_or_404(Event, pk=id)
@@ -50,11 +62,17 @@ def create_event(request):
 
 def edit_event(request, id):
     event = get_object_or_404(Event, pk=id)
-    form = EventForm(request.POST or None, request.FILES or None, instance=event)
-    if form.is_valid() and request.method == 'POST':
-        form.save()
-        return redirect('main:home_event')
-    context = {
-        'form': form
-    }
-    return render(request, 'main/edit_event.html', context)
+
+    if request.method == 'POST':
+        form = EventForm(request.POST, request.FILES, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Event berhasil diperbarui!")
+            return redirect('main:home_event')
+    else:
+        local_time = timezone.localtime(event.date)
+        formatted_date = local_time.strftime("%d %B %Y %H.%M")
+        form = EventForm(instance=event, initial={'date': formatted_date})
+
+    context = {'form': form, 'event': event}
+    return render(request, 'edit_event.html', context)

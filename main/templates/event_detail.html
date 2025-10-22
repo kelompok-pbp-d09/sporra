@@ -6,33 +6,67 @@
 {% endblock meta %}
 
 {% block content %}
-<p><a href="{% url 'main:home_event' %}"><button>← Back to Event List</button></a></p>
 
-<h1>{{ event.title }}</h1>
+<!-- Back Navigation -->
+<div class="mb-6">
+  <a href="{% url 'main:home_event' %}" 
+     class="font-custom1 fixed top-24 left-6 z-50 flex items-center space-x-2 backdrop-blur-md bg-gray-700/80 text-gray-300 hover:bg-blue-600 hover:text-white transition-all px-4 py-2 rounded-full shadow-md font-medium">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    <span>Back to Home</span>
+  </a>
+</div>
 
-<p>
-  <b>{{ event.get_category_display }}</b>
-  | Views: {{ event.event_views }}
-</p>
+<!-- Event Container -->
+<div class="relative max-w-4xl mx-auto p-6 bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl text-white space-y-4">
 
-<p>Waktu acara: {{ event.date|localtime|date:"d M Y, H:i" }}</p>
-<p>Lokasi: {{ event.location }}</p>
-<p>{{ event.description }}</p>
-<p>Harga: Rp.{{ event.price }}</p>
+  <!-- Title -->
+  <h1 class="text-4xl font-bold mb-4">{{ event.title }}</h1>
 
-{% if has_ended %}
-    <p><strong>Acara ini telah selesai.</strong> Terima kasih atar ketertarikannya!</p>
-{% else %}
-    <a href="{% url 'main:create_event' %}">
-        <button>Daftar</button>
-    </a>
-{% endif %}
+  <!-- Category & Views -->
+  <p class="text-gray-300">
+    <span class="font-semibold">{{ event.get_category_display }}</span> |
+    Views: {{ event.event_views }}
+  </p>
 
-{% if event.user %}
-  <p>Pembuat acara: {{ event.user.username }}</p>
-{% else %}
-  <p>Pembuat acara: Anonymous</p>
-{% endif %}
+  <!-- Details -->
+  <p><span class="font-semibold">Waktu acara:</span> {{ event.date|localtime|date:"d M Y, H:i" }}</p>
+  <p><span class="font-semibold">Lokasi:</span> {{ event.location }}</p>
+  <p><span class="font-semibold">Harga:</span> Rp.{{ event.price }}</p>
 
-<p><a href="{% url 'main:edit_event' event.id %}"><button>Edit Event</button></a></p>
+  <!-- Description -->
+  <p class="mt-4">{{ event.description }}</p>
+
+  <!-- Event Status -->
+  {% if has_ended %}
+    <p class="mt-4 text-red-400 font-semibold text-center">Acara ini telah selesai. Terima kasih atas ketertarikannya!</p>
+  {% else %}
+    <div class="flex justify-center mt-6">
+      <a href="{% url 'main:create_event' %}">
+        <button class="bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
+          Daftar
+        </button>
+      </a>
+    </div>
+  {% endif %}
+
+  <p class="mt-4">
+    <span class="font-semibold">Pembuat acara:</span>
+    {% if event.user %}
+      {{ event.user.username }}
+    {% else %}
+      Anonymous
+    {% endif %}
+  </p>
+
+  <!-- Edit -->
+  <a href="{% url 'main:edit_event' event.id %}">
+    <button class="mt-4 bg-gray-600 hover:bg-gray-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
+      Edit Event
+    </button>
+  </a>
+
+</div>
+
 {% endblock content %}

@@ -1,16 +1,61 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {% block meta %} {% endblock meta %}
-    <script src="https://cdn.tailwindcss.com"> </script>
-    <link rel="stylesheet" href="{% static 'css/global.css' %}"/>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
-</head>
+<!doctype html>
+<html lang="en" class="dark"> <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SPORRA - Sports News</title>
+    
+    {% load static %}
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      // Kustomisasi Tailwind untuk dark mode typography
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            typography: ({ theme }) => ({
+              DEFAULT: {
+                css: {
+                  '--tw-prose-body': theme('colors.gray[300]'),
+                  '--tw-prose-headings': theme('colors.white'),
+                  '--tw-prose-links': theme('colors.blue[400]'),
+                  '--tw-prose-bold': theme('colors.white'),
+                  '--tw-prose-hr': theme('colors.gray[700]'),
+                  '--tw-prose-quotes': theme('colors.gray[100]'),
+                  '--tw-prose-quote-borders': theme('colors.gray[700]'),
+                },
+              },
+            }),
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-gray-900 text-gray-200 antialiased min-h-screen flex flex-col">
 
-<body>
-    {% block content %} {% endblock content %}
-</body>
+    <nav class="bg-gray-800 shadow-lg sticky top-0 z-50">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex-shrink-0">
+            <a href="{% url 'main:home_event' %}" class="text-white font-bold text-xl">SPORRA</a>
+          </div>
+          <div>
+            <a href="{% url 'main:home_event' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Events</a>
+          </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8 flex-grow">
+      {% block content %}
+      {% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 shadow-inner mt-12">
+      <div class="container mx-auto px-6 py-4 text-center text-gray-500">
+        &copy; {% now "Y" %} SPORRA. All rights reserved.
+      </div>
+    </footer>
+
+  </body>
 </html>
