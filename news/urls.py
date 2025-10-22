@@ -1,12 +1,22 @@
+# news/urls.py
+
 from django.urls import path
 from . import views
 
 app_name = 'news'
 
 urlpatterns = [
-    # URL for the list of articles. E.g., [yoursite.com/news/](https://yoursite.com/news/)
-    path('', views.article_list, name='article_list'),
+    path('', views.ArticleListView.as_view(), name='article-list'),
     
-    # URL for a single article. E.g., [yoursite.com/news/real-madrid-wins-again/](https://yoursite.com/news/real-madrid-wins-again/)
-    path('<slug:slug>/', views.article_detail, name='article_detail'),
+    # SEBELUMNYA: path('articles/new/', ...)
+    path('new/', views.ArticleCreateView.as_view(), name='article-create'),
+    
+    # SEBELUMNYA: path('articles/<uuid:pk>/', ...)
+    path('<uuid:pk>/', views.ArticleDetailView.as_view(), name='article-detail'),
+    
+    # SEBELUMNYA: path('articles/<uuid:pk>/edit/', ...)
+    path('<uuid:pk>/edit/', views.ArticleUpdateView.as_view(), name='article-update'),
+    
+    # SEBELUMNYA: path('articles/<uuid:pk>/delete/', ...)
+    path('<uuid:pk>/delete/', views.ArticleDeleteView.as_view(), name='article-delete'),
 ]
