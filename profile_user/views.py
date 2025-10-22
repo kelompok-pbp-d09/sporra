@@ -32,4 +32,4 @@ def login_user(request):
 
 def logout_user(request):
     logout(request)
-    return redirect('profile_user:login')   
+    return redirect('profile_user:login')
