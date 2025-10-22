@@ -1,0 +1,23 @@
+<h1>Event List</h1>
+
+<a href="{% url 'main:create_event' %}">
+  <button>+ Add Event</button>
+</a>
+
+{% if event_list %}
+  <ul>
+    {% for event in event_list %}
+      <li>
+        <h2>
+          <a href="{% url 'main:event_detail' event.id %}">{{ event.title }}</a>
+        </h2>
+        <p>{{ event.description }}</p>
+        <p><strong>Date:</strong> {{ event.date|date:"d M Y, H:i" }}</p>
+        <p>Category: {{ event.get_category_display }}</p>
+      </li>
+      <hr>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No events available.</p>
+{% endif %}

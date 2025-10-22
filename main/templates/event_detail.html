@@ -1,0 +1,21 @@
+<title>Event Details</title>
+<p><a href="{% url 'main:home_event' %}">← Back to Event List</a></p>
+
+<h1>{{ event.title }}</h1>
+
+<p>
+  <b>{{ event.get_category_display }}</b>
+  | <i>{{ event.date|date:"d M Y, H:i" }}</i>
+  | Views: {{ event.event_views }}
+</p>
+<p>Location: {{event.location}}</p>
+<p>{{ event.description }}</p>
+
+<a href="{% url 'main:create_event' %}">
+    <button>+ Join</button>
+    </a>
+{% if event.user %}
+  <p>Author: {{ event.user.username }}</p>
+{% else %}
+  <p>Author: Anonymous</p>
+{% endif %}
