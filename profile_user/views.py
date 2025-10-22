@@ -23,7 +23,7 @@ def login_user(request):
       if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('profile_user:register')
+            return redirect('news:article-list')
 
    else:
       form = AuthenticationForm(request)
