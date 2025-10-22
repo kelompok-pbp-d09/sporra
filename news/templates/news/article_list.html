@@ -1,36 +1,75 @@
-{% extends 'base.html' %}
-
-{% block title %}Sports News | SportsConnect{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-4xl font-bold mb-4">Trending News</h1>
-    <div class="flex space-x-2">
-        <a href="{% url 'news:article_list' %}" class="{% if not selected_category %}bg-blue-600{% else %}bg-gray-700 hover:bg-gray-600{% endif %} text-white py-2 px-4 rounded-full text-sm">All</a>
-        {% for category in categories %}
-            <a href="?category={{ category.slug }}" class="{% if selected_category == category.slug %}bg-blue-600{% else %}bg-gray-700 hover:bg-gray-600{% endif %} text-white py-2 px-4 rounded-full text-sm">{{ category.name }}</a>
-        {% endfor %}
-    </div>
-</div>
+  <h1 class="text-3xl font-bold text-white mb-6">Daftar Berita</h1>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {% for article in articles %}
-    <a href="{% url 'news:article_detail' slug=article.slug %}" class="block bg-gray-800 rounded-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-        {% if article.image %}
-            <img class="w-full h-48 object-cover" src="{{ article.image.url }}" alt="{{ article.title }}">
-        {% else %}
-            <div class="w-full h-48 bg-gray-700 flex items-center justify-center">
-                <span class="text-gray-500">No Image</span>
-            </div>
-        {% endif %}
-        <div class="p-6">
-            <p class="text-blue-400 text-sm font-semibold">{{ article.category.name }}</p>
-            <h2 class="text-2xl font-bold mt-2 mb-2">{{ article.title }}</h2>
-            <p class="text-gray-400 text-sm">{{ article.content|truncatewords:20 }}</p>
-        </div>
+  <div class="flex flex-wrap gap-2 mb-6">
+    <a href="{% url 'news:article-list' %}" 
+       class="py-1 px-4 rounded-full text-sm font-medium transition
+              {% if not current_category %}
+                bg-blue-600 text-white
+              {% else %}
+                bg-gray-700 text-gray-300 hover:bg-gray-600
+              {% endif %}">
+      Semua
     </a>
-    {% empty %}
-    <p class="text-gray-400 col-span-full">No articles found for this category.</p>
+    {% for value, display_name in categories %}
+      <a href="?category={{ value }}" 
+         class="py-1 px-4 rounded-full text-sm font-medium transition
+                {% if current_category == value %}
+                  bg-blue-600 text-white
+                {% else %}
+                  bg-gray-700 text-gray-300 hover:bg-gray-600
+                {% endif %}">
+        {{ display_name }}
+      </a>
     {% endfor %}
-</div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for article in articles %}
+      <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+        {% if article.thumbnail %}
+          <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
+               class="h-48 w-full object-cover">
+        {% endif %}
+        
+        <div class="p-5 flex flex-col flex-grow">
+          <h2 class="text-xl font-semibold text-white mb-2">{{ article.title }}</h2>
+          <p class="text-sm text-gray-400 mb-1">
+            Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
+          </p>
+          <p class="text-sm text-gray-400 mb-4">
+            {{ article.created_at|date:"d M Y, H:i" }} | Views: {{ article.news_views }}
+          </p>
+          
+          <a href="{% url 'news:article-detail' article.id %}" 
+             class="mt-auto inline-block bg-blue-600 hover:bg-blue-700 text-white text-center font-medium py-2 px-4 rounded-lg transition duration-150">
+            Baca Selengkapnya
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-gray-400 col-span-full">Belum ada artikel yang dipublikasikan.</p>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="flex justify-center mt-8 space-x-2">
+      {% if page_obj.has_previous %}
+        <a href="?page=1" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">&laquo; Awal</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Sebelumnya</a>
+      {% endif %}
+
+      <span class="py-2 px-4 bg-gray-800 text-gray-400 rounded-lg">
+        Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}.
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Selanjutnya</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Akhir &raquo;</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+
 {% endblock %}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" class="dark"> <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SPORRA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+      // Kustomisasi Tailwind (opsional, tapi bagus untuk dark mode)
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            // Ini akan membuat styling 'prose' (konten artikel)
+            // terlihat bagus di dark mode
+            typography: ({ theme }) => ({
+              DEFAULT: {
+                css: {
+                  '--tw-prose-body': theme('colors.gray[300]'),
+                  '--tw-prose-headings': theme('colors.white'),
+                  '--tw-prose-lead': theme('colors.gray[400]'),
+                  '--tw-prose-links': theme('colors.blue[400]'),
+                  '--tw-prose-bold': theme('colors.white'),
+                  '--tw-prose-counters': theme('colors.gray[400]'),
+                  '--tw-prose-bullets': theme('colors.gray[600]'),
+                  '--tw-prose-hr': theme('colors.gray[700]'),
+                  '--tw-prose-quotes': theme('colors.gray[100]'),
+                  '--tw-prose-quote-borders': theme('colors.gray[700]'),
+                  '--tw-prose-captions': theme('colors.gray[400]'),
+                  '--tw-prose-code': theme('colors.white'),
+                  '--tw-prose-pre-code': theme('colors.gray[300]'),
+                  '--tw-prose-pre-bg': theme('colors.gray[800]'),
+                  '--tw-prose-th-borders': theme('colors.gray[600]'),
+                  '--tw-prose-td-borders': theme('colors.gray[700]'),
+                },
+              },
+            }),
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-gray-900 text-gray-200 antialiased">
+
+    <nav class="bg-gray-800 shadow-lg">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0">
+            <a href="{% url 'news:article-list' %}" class="text-2xl font-bold text-white">
+              SPORT NEWS
+            </a>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            {% if user.is_authenticated %}
+              <span class="text-gray-300">Halo, {{ user.username }}!</span>
+              <a href="{% url 'news:article-create' %}" 
+                 class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                Buat Artikel
+              </a>
+              <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                  Logout
+                </button>
+              </form>
+            {% else %}
+              <a href="{% url 'login' %}" 
+                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150">
+                Login
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+      {% block content %}
+      {% endblock %}
+    </main>
+
+  </body>
+</html>
