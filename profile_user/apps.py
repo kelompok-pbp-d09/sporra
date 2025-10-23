@@ -31,5 +31,6 @@ class ProfileUserConfig(AppConfig):
                     UserProfile.objects.create(
                         user=admin_user,
                         full_name='Admin Sporra',
+                        phone='000000000',  # Tambahkan nomor telepon default
                         role='admin'
                     )
