@@ -1,0 +1,84 @@
+{% load static %} {# Bagian Grid Artikel #}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for article in articles %}
+  <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+    {% if article.thumbnail %}
+    <img
+      src="{{ article.thumbnail }}"
+      alt="{{ article.title }}"
+      class="h-48 w-full object-cover"
+    />
+    {% else %}
+    <img
+      src="{% static 'images/no-image.jpg' %}"
+      alt="Gambar tidak tersedia"
+      class="h-48 w-full object-cover"
+    />
+    {% endif %}
+
+    <div class="p-5 flex flex-col flex-grow">
+      <h2 class="text-xl font-semibold text-white mb-2">
+        {{ article.title|truncatechars:70 }}
+      </h2>
+      {# Judul dipotong #}
+      <p class="text-sm text-gray-400 mb-1">
+        Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
+      </p>
+      <p class="text-sm text-gray-400 mb-4">
+        {{ article.created_at|date:"d M Y, H:i" }} | Views: {{ article.news_views }}
+      </p>
+      <a
+        href="{{ article.get_absolute_url }}"
+        {#
+        Gunakan
+        get_absolute_url
+        jika
+        ada
+        #}
+        class="mt-auto inline-block bg-blue-600 hover:bg-blue-700 text-white text-center font-medium py-2 px-4 rounded-lg transition duration-150"
+      >
+        Baca Selengkapnya
+      </a>
+    </div>
+  </div>
+  {% empty %}
+    <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12"> {# Mengambil lebar penuh grid #}
+        <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada artikel" class="mx-auto mb-4 w-48 h-48 object-contain"> {# Sesuaikan w- dan h- #}
+        <p class="text-gray-400 text-lg">Belum ada artikel yang dipublikasikan atau sesuai filter.</p>
+    </div>
+  {% endfor %}
+</div>
+
+{# Bagian Pagination (juga perlu di-refresh infonya) #} {% if is_paginated %}
+<nav class="flex justify-center mt-8 space-x-2 pagination-controls">
+  {# Beri class untuk target JS (opsional) #} {% if page_obj.has_previous %}
+  <a
+    href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg"
+    >&laquo; Awal</a
+  >
+  <a
+    href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg"
+    >Sebelumnya</a
+  >
+  {% endif %}
+
+  <span class="py-2 px-4 bg-gray-800 text-gray-400 rounded-lg">
+    Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}.
+  </span>
+
+  {% if page_obj.has_next %}
+  <a
+    href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg"
+    >Selanjutnya</a
+  >
+  <a
+    href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+    class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg"
+    >Akhir &raquo;</a
+  >
+  {% endif %}
+</nav>
+{% endif %}
