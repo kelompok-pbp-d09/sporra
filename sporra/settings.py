@@ -34,6 +34,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "afero-aqil-sporra.pbp.cs.ui.ac.id"]
 
+CSRF_TRUSTED_ORIGINS = ['https://afero-aqil-sporra.pbp.cs.ui.ac.id']
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'news',
     'profile_user',
     'event',
+    'forumdiskusi',
     'ticketing',
 ]
 
