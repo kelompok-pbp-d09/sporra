@@ -43,7 +43,7 @@ def register_user(request):
                 phone=form.cleaned_data['phone']
             )
             login(request, user)
-            messages.success(request, f'Akun {user.username} berhasil dibuat!')
+            messages.success(request, f'Akun {user.username} berhasil dibuat! Selamat datang!')
             return redirect('news:article-list')
     else:
         form = CustomUserCreationForm()
