@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
-from .forms import CustomUserCreationForm
+from .forms import *
 from .models import UserProfile
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
-
+@login_required(login_url='profile_user/login')
 def show_profile(request, username=None):
     if username:
         # Jika username diberikan, tampilkan profile user tersebut
@@ -30,6 +31,21 @@ def show_profile(request, username=None):
     }
     
     return render(request, 'show_profile.html', context)
+
+@login_required
+def edit_profile(request):
+    user_profile = request.user.userprofile
+    
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=user_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile_user:show_profile')
+    else:
+        form = EditProfileForm(instance=user_profile)
+    
+    return render(request, 'edit_profile.html', {'form': form})
 
 def register_user(request):
     if request.method == 'POST':

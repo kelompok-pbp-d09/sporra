@@ -46,9 +46,8 @@ class UserProfile(models.Model):
         return self.statuses.all()
 
     #tambahkan fitur event yang sedang diikuti
-    #edit profile picture, bio,username,no telepon dengan (sudah sekalian form)
     #filter informasi
-    #
+    #STATUS
 
 class Status(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='statuses')

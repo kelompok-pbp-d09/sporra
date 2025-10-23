@@ -93,7 +93,13 @@ class ArticleCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+    
+        # Increment news_created counter di UserProfile
+        user_profile = self.request.user.userprofile
+        user_profile.increment_news()
+
+        return response
 
 
 # --- UPDATE View ---
