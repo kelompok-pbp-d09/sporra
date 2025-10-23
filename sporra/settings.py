@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'news',
     'profile_user',
     'event',
+    'forumdiskusi',
     'ticketing',
 ]
 
