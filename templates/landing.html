@@ -29,7 +29,7 @@
       </div>
   </div>
 
-  <div class="container mx-auto px-4 py-16">
+<div class="container mx-auto px-4 py-16">
     <h2 class="text-3xl font-bold text-white text-center mb-10">
       Trending News Right Now 
     </h2>
@@ -51,14 +51,13 @@
             </div>
           
             <div class="p-5 flex flex-col flex-grow">
+               {# Truncate judul agar tidak terlalu panjang #}
               <h3 class="text-lg font-semibold text-white mb-2 transition duration-300 group-hover:text-blue-400">{{ article.title|truncatechars:65 }}</h3> 
               <p class="text-sm text-gray-400 mb-4">
                 Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
               </p>
-              {# Tombol 'Read More' bisa dihapus karena card sudah bisa diklik #}
               {# <a href="{{ article.get_absolute_url }}" class="mt-auto ...">Read More</a> #}
               
-              {# Tambahkan panah kecil sebagai indikator klik #}
               <span class="mt-auto text-blue-400 text-sm font-medium self-end group-hover:translate-x-1 transition-transform duration-200">
                 Read More &rarr;
               </span>
@@ -66,11 +65,13 @@
           </a>
         </div>
       {% empty %}
-        <div class="col-span-1 md:col-span-3 text-center py-12"> {# Perbaiki span untuk empty state #}
+        <div class="col-span-1 md:col-span-3 text-center py-12">
             <img src="{% static 'images/empty-news.png' %}" alt="Tidak ada artikel" class="mx-auto mb-4 w-48 h-48 object-contain">
             <p class="text-gray-400 text-lg">Belum ada artikel terbaru.</p>
         </div>
       {% endfor %}
+    </div>
+</div>
     </div>
 </div>
 
