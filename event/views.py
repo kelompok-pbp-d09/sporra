@@ -114,7 +114,6 @@ def get_events_ajax(request):
             'id': str(event.id),
             'judul': event.judul,
             'lokasi': event.lokasi,
-            'harga': str(event.harga),
             'kategori_display': event.get_kategori_display(),
             'date_formatted': date_filter(local_date, "d M Y, H:i"),
             'detail_url': reverse('event:event_detail', args=[event.id]),
