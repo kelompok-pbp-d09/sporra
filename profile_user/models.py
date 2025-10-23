@@ -15,7 +15,7 @@ class UserProfile(models.Model):
 
     # sport_interest = models.CharField(max_length=100, blank=True, null=True)
     # joined_date = models.DateTimeField(auto_now_add=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  # 👈 Role field ditambahkan
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  #Role field 
 
     post_created = models.PositiveIntegerField(default=0) #banyak post yang telah dibuat
     news_created = models.PositiveIntegerField(default=0) #banyak berita yang telah dibuat
