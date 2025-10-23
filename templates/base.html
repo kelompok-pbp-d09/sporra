@@ -1,3 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SPORRA{% endblock %}</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <!-- This now correctly links to the file in your project's static folder -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        /* A good place for a project-wide font */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white ">
 <!doctype html>
 <html lang="en" class="dark"> <head>
     <meta charset="utf-8">
@@ -48,6 +64,10 @@
                  class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 News
               </a>
+              <a href="{% url 'event:home_event' %}" 
+                 class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                Events
+              </a>
               <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 Tickets
               </a>
@@ -60,6 +80,11 @@
               <a href="{% url 'news:article-create' %}" 
                  class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Buat Artikel
+              </a>
+
+              <a href="{% url 'event:create_event' %}" 
+                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                Buat Acara
               </a>
               
               <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
@@ -76,7 +101,7 @@
 
             {% else %}
               
-              <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+              <a href="{% url 'profile_user:register' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 Register
               </a>
               

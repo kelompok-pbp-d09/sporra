@@ -1,1 +1,27 @@
-/* ini file css global buat warna theme aplikasi dll. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+/* 2. Terapkan Font ke Seluruh Situs & Atur Dasar */
+body {
+    font-family: 'Inter', sans-serif; /* Gunakan Inter, fallback ke sans-serif standar */
+    -webkit-font-smoothing: antialiased; /* Teks lebih halus di Webkit (Chrome/Safari) */
+    -moz-osx-font-smoothing: grayscale; /* Teks lebih halus di Firefox */
+}
+
+/* 3. (Opsional) Styling Scrollbar Dark Mode (Untuk Browser Webkit) */
+::-webkit-scrollbar {
+    width: 10px; /* Lebar scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: #1f2937; /* Warna track (abu-abu gelap) - sesuaikan jika perlu */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #4b5563; /* Warna thumb (abu-abu lebih terang) */
+    border-radius: 6px; /* Sudut melengkung */
+    border: 2px solid #1f2937; /* Border sewarna track agar terlihat lebih ramping */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280; /* Warna thumb saat hover */
+}

@@ -1,75 +1,101 @@
 {% extends "base.html" %}
+{% load static %} 
 
 {% block content %}
-  <h1 class="text-3xl font-bold text-white mb-6">Daftar Berita</h1>
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-white">Daftar Berita</h1>
+    
+    {# --- TOMBOL REFRESH --- #}
+    <button id="refresh-button" 
+            class="inline-flex items-center bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 animate-spin hidden" id="loading-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /> </svg>
+        <span id="refresh-text">Refresh</span>
+    </button>
+    {# -------------------- #}
+</div>
 
-  <div class="flex flex-wrap gap-2 mb-6">
-    <a href="{% url 'news:article-list' %}" 
-       class="py-1 px-4 rounded-full text-sm font-medium transition
-              {% if not current_category %}
-                bg-blue-600 text-white
-              {% else %}
-                bg-gray-700 text-gray-300 hover:bg-gray-600
-              {% endif %}">
-      Semua
+{# --- FILTER KATEGORI (Tidak berubah) --- #}
+<div class="flex flex-wrap gap-2 mb-6">
+  <a
+    href="{% url 'news:article-list' %}"
+    class="py-1 px-4 rounded-full text-sm font-medium transition {% if not current_category %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}"
+  >
+    Semua
+  </a>
+  {% for value, display_name in categories %}
+    {% if value != 'olahraga lain' %} 
+    <a href="{% url 'news:article-list' %}?category={{ value }}" 
+       class="py-1 px-4 rounded-full text-sm font-medium transition {% if current_category == value %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+      {{ display_name }}
     </a>
-    {% for value, display_name in categories %}
-      <a href="?category={{ value }}" 
-         class="py-1 px-4 rounded-full text-sm font-medium transition
-                {% if current_category == value %}
-                  bg-blue-600 text-white
-                {% else %}
-                  bg-gray-700 text-gray-300 hover:bg-gray-600
-                {% endif %}">
-        {{ display_name }}
-      </a>
-    {% endfor %}
-  </div>
+    {% endif %}
+  {% endfor %}
+  <a href="{% url 'news:article-list' %}?category=olahraga%20lain" 
+     class="py-1 px-4 rounded-full text-sm font-medium transition {% if current_category == 'olahraga lain' %} bg-blue-600 text-white {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+    Olahraga Lain
+  </a>
+</div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for article in articles %}
-      <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-        {% if article.thumbnail %}
-          <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
-               class="h-48 w-full object-cover">
-        {% endif %}
+{# --- CONTAINER UNTUK GRID & PAGINATION YANG AKAN DI-REFRESH --- #}
+<div id="article-list-container">
+    {# Include partial template untuk tampilan awal #}
+    {% include 'news/_article_grid_partial.html' with articles=articles page_obj=page_obj is_paginated=is_paginated %}
+</div>
+
+<script>
+    const refreshButton = document.getElementById('refresh-button');
+    const articleContainer = document.getElementById('article-list-container');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const refreshIcon = document.getElementById('refresh-icon');
+    const refreshText = document.getElementById('refresh-text');
+
+    refreshButton.addEventListener('click', () => {
+        // Tampilkan loading & disable tombol
+        loadingSpinner.classList.remove('hidden');
+        refreshIcon.classList.add('hidden');
+        refreshText.textContent = 'Refreshing...';
+        refreshButton.disabled = true;
+        refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
         
-        <div class="p-5 flex flex-col flex-grow">
-          <h2 class="text-xl font-semibold text-white mb-2">{{ article.title }}</h2>
-          <p class="text-sm text-gray-400 mb-1">
-            Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
-          </p>
-          <p class="text-sm text-gray-400 mb-4">
-            {{ article.created_at|date:"d M Y, H:i" }} | Views: {{ article.news_views }}
-          </p>
-          
-          <a href="{% url 'news:article-detail' article.id %}" 
-             class="mt-auto inline-block bg-blue-600 hover:bg-blue-700 text-white text-center font-medium py-2 px-4 rounded-lg transition duration-150">
-            Baca Selengkapnya
-          </a>
-        </div>
-      </div>
-    {% empty %}
-      <p class="text-gray-400 col-span-full">Belum ada artikel yang dipublikasikan.</p>
-    {% endfor %}
-  </div>
+        // Dapatkan URL saat ini (untuk mempertahankan filter kategori)
+        const currentUrl = new URL(window.location.href);
+        
+        // Tambahkan/Update parameter ajax=true
+        currentUrl.searchParams.set('ajax', 'true');
+        // Hapus parameter page agar selalu refresh ke halaman 1
+        currentUrl.searchParams.delete('page'); 
 
-  {% if is_paginated %}
-    <nav class="flex justify-center mt-8 space-x-2">
-      {% if page_obj.has_previous %}
-        <a href="?page=1" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">&laquo; Awal</a>
-        <a href="?page={{ page_obj.previous_page_number }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Sebelumnya</a>
-      {% endif %}
-
-      <span class="py-2 px-4 bg-gray-800 text-gray-400 rounded-lg">
-        Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}.
-      </span>
-
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Selanjutnya</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}" class="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg">Akhir &raquo;</a>
-      {% endif %}
-    </nav>
-  {% endif %}
+        fetch(currentUrl.toString(), {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Header standar AJAX
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json(); // Kita mengharapkan JSON dari view
+        })
+        .then(data => {
+            // Ganti isi container dengan HTML baru dari response JSON
+            articleContainer.innerHTML = data.html; 
+        })
+        .catch(error => {
+            console.error('Error fetching articles:', error);
+            refreshText.textContent = 'Error!';
+            // Tampilkan pesan error ke user jika perlu
+        })
+        .finally(() => {
+            // Sembunyikan loading & enable tombol lagi
+            loadingSpinner.classList.add('hidden');
+            refreshIcon.classList.remove('hidden');
+            refreshText.textContent = 'Refresh';
+            refreshButton.disabled = false;
+            refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        });
+    });
+</script>
 
 {% endblock %}

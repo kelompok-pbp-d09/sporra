@@ -14,20 +14,31 @@
         Forum Diskusi: {{ news.title }}
     </h1>
 
+    <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
     <!-- Daftar komentar -->
     <div id="comment-list" class="space-y-4 mb-10">
         {% for comment in comments %}
         <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-{{ comment.id }}">
             <div class="flex justify-between items-start">
-                <div>
-                    <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
-                    <p class="text-gray-200 whitespace-pre-line">{{ comment.content }}</p>
-                    <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
+                <div class="flex items-center space-x-4">
+                    <div class="flex flex-col items-center">
+                        <button class="vote-btn text-gray-400 hover:text-blue-400" data-id="{{ comment.id }}" data-vote="up">▲</button>
+                        <p id="score-{{ comment.id }}" class="text-sm font-bold text-white">{{ comment.score }}</p>
+                        <button class="vote-btn text-gray-400 hover:text-red-400" data-id="{{ comment.id }}" data-vote="down">▼</button>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
+                        <p class="text-gray-200 whitespace-pre-line">{{ comment.content }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
+                    </div>
                 </div>
 
-                {% if user.is_authenticated and (comment.author == user or user.userprofile and user.userprofile.role == 'admin') %}
-                <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
-                        data-comment-id="{{ comment.id }}">Hapus</button>
+                {% if user.is_authenticated %}
+                {% if comment.author == user or user.userprofile and user.userprofile.is_admin %}
+                    <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
+                            data-comment-id="{{ comment.id }}">Hapus</button>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -36,25 +47,22 @@
         {% endfor %}
     </div>
 
-    <!-- Tombol tambah komentar -->
+    {% if user.is_authenticated %}
     <div class="text-center">
-        {% if user.is_authenticated %}
-        <button id="openModal"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition-all duration-200">
+        <button id="openModal" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition duration-200">
             Tambah Komentar
         </button>
-        {% else %}
-        <p class="text-gray-400">
-            Silakan <a href="{% url 'profile_user:login' %}" class="text-blue-400 hover:underline">login</a>
-            untuk menulis komentar.
-        </p>
-        {% endif %}
     </div>
+    {% else %}
+    <p class="text-gray-400 text-center">
+        Silakan <a href="{% url 'profile_user:login' %}" class="text-blue-400 hover:underline">login</a> untuk menulis komentar.
+    </p>
+    {% endif %}
 </div>
 
-<!-- Modal Tambah Komentar -->
-<div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 backdrop-blur-sm">
-    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl transform scale-95 transition-all duration-200">
+<!-- Modal tambah komentar -->
+<div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl">
         <h2 class="text-xl font-semibold mb-4 text-white text-center">Tulis Komentar</h2>
         <form id="commentForm">
             {% csrf_token %}
@@ -62,125 +70,114 @@
                 class="w-full p-3 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
                 placeholder="Tulis komentar kamu di sini..."></textarea>
             <div class="flex justify-end space-x-2">
-                <button type="button" id="closeModal"
-                    class="bg-gray-600 hover:bg-gray-700 px-4 py-1 rounded text-white transition">Batal</button>
-                <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-white transition">Kirim</button>
+                <button type="button" id="closeModal" class="bg-gray-600 hover:bg-gray-700 px-4 py-1 rounded text-white transition">Batal</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-white transition">Kirim</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 backdrop-blur-sm">
-    <div class="bg-gray-800 p-6 rounded-lg w-80 shadow-lg text-center">
-        <h2 class="text-xl font-semibold text-white mb-4">Yakin ingin hapus komentar ini?</h2>
-        <div class="flex justify-center space-x-3">
-            <button id="cancelDelete"
-                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-1 rounded transition">Batal</button>
-            <button id="confirmDelete"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded transition">Hapus</button>
-        </div>
-    </div>
-</div>
-
-<!-- Toast Notification -->
-<div id="toast"
-    class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-500 opacity-0 z-50">
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition z-50">
     Komentar berhasil ditambahkan!
 </div>
 
-<!-- jQuery buat AJAX -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
     let commentToDelete = null;
 
-    // buka/tutup modal tambah komentar
-    $("#openModal").click(() => $("#commentModal").removeClass("hidden"));
-    $("#closeModal").click(() => $("#commentModal").addClass("hidden"));
-
-    // buka modal konfirmasi hapus
-    $(document).on("click", ".delete-btn", function() {
-        commentToDelete = $(this).data("comment-id");
-        $("#deleteModal").removeClass("hidden");
-    });
-
-    // batal hapus
-    $("#cancelDelete").click(() => {
-        commentToDelete = null;
-        $("#deleteModal").addClass("hidden");
-    });
-
-    // fungsi toast
-    function showToast(message, colorClass = "bg-green-600") {
-        const toast = $("#toast");
-        toast.removeClass("hidden bg-green-600 bg-red-600").addClass(colorClass);
-        toast.text(message);
-        setTimeout(() => toast.removeClass("opacity-0"), 100);
-        setTimeout(() => toast.addClass("opacity-0"), 3000);
-        setTimeout(() => toast.addClass("hidden"), 3500);
+    function showToast(message, color="bg-green-600") {
+        const t=$("#toast");
+        t.removeClass("hidden bg-green-600 bg-red-600").addClass(color).text(message);
+        setTimeout(()=>t.removeClass("opacity-0"),100);
+        setTimeout(()=>t.addClass("opacity-0"),2500);
+        setTimeout(()=>t.addClass("hidden"),3000);
     }
 
-    // submit komentar via AJAX
-    $("#commentForm").submit(function(e) {
+    // buka/tutup modal
+    $("#openModal").click(()=>$("#commentModal").removeClass("hidden"));
+    $("#closeModal").click(()=>$("#commentModal").addClass("hidden"));
+
+    // tambah komentar
+    $("#commentForm").submit(function(e){
         e.preventDefault();
-
-        const content = $("#commentContent").val().trim();
-        if (!content) {
-            showToast("Komentar tidak boleh kosong", "bg-red-600");
-            return;
-        }
-
         $.ajax({
-            type: "POST",
-            url: "{% url 'forumdiskusi:add_comment' news.pk %}",
-            data: {
-                'content': content,
-                'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
+            type:"POST",
+            url:"{% url 'forumdiskusi:add_comment' news.pk %}",
+            data:{
+                content:$("#commentContent").val(),
+                csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()
             },
-            success: function(response) {
-                $("#comment-list").prepend(`
-                    <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-${response.id}">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-semibold text-blue-300">${response.username}</p>
-                                <p class="text-gray-200 whitespace-pre-line">${response.content}</p>
-                                <p class="text-sm text-gray-500 mt-1">${response.created_at}</p>
+            success:function(r){
+                const newComment = `
+                <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-${r.id}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex flex-col items-center">
+                                <button class="vote-btn text-gray-400 hover:text-blue-400" data-id="${r.id}" data-vote="up">▲</button>
+                                <p id="score-${r.id}" class="text-sm font-bold text-white">0</p>
+                                <button class="vote-btn text-gray-400 hover:text-red-400" data-id="${r.id}" data-vote="down">▼</button>
                             </div>
-                            <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
-                                    data-comment-id="${response.id}">Hapus</button>
+                            <div>
+                                <p class="font-semibold text-blue-300">${r.username}</p>
+                                <p class="text-gray-200 whitespace-pre-line">${r.content}</p>
+                                <p class="text-sm text-gray-500 mt-1">${r.created_at}</p>
+                            </div>
                         </div>
+                        <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition" data-comment-id="${r.id}">Hapus</button>
                     </div>
-                `);
-                $("#commentContent").val("");
+                </div>`;
+                $("#comment-list").prepend(newComment);
                 $("#commentModal").addClass("hidden");
+                $("#commentContent").val("");
                 showToast("Komentar berhasil ditambahkan!");
             },
-            error: function() {
-                showToast("Gagal menambahkan komentar", "bg-red-600");
-            }
+            error:()=>showToast("Gagal menambahkan komentar","bg-red-600")
         });
     });
 
-    // hapus komentar via AJAX
-    $("#confirmDelete").click(function() {
-        if (!commentToDelete) return;
-
+    // hapus komentar
+    $(document).on("click",".delete-btn",function(){
+        const id=$(this).data("comment-id");
         $.ajax({
-            type: "POST",
-            url: `/forumdiskusi/delete_comment/${commentToDelete}/`,
-            data: {
-                'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()
-            },
-            success: function() {
-                $(`#comment-${commentToDelete}`).remove();
+            type:"POST",
+            url:`/forumdiskusi/delete_comment/${id}/`,
+            data:{csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
+            success:()=>{
+                $(`#comment-${id}`).remove();
                 showToast("Komentar berhasil dihapus!");
-                $("#deleteModal").addClass("hidden");
             },
-            error: function() {
-                showToast("Gagal menghapus komentar", "bg-red-600");
-            }
+            error:()=>showToast("Gagal menghapus komentar","bg-red-600")
+        });
+    });
+
+    // voting
+    $(document).on("click",".vote-btn",function(){
+        const id=$(this).data("id");
+        const type=$(this).data("vote");
+        $.ajax({
+            type:"POST",
+            url:`/forum/post/${id}/vote/`,
+            data:{
+                vote:type,
+                csrfmiddlewaretoken:$("#csrf_token").val()
+            },
+            success:function(r){
+                $(`#score-${id}`).text(r.score);
+                const up=$(`#comment-${id} .vote-btn[data-vote='up']`);
+                const down=$(`#comment-${id} .vote-btn[data-vote='down']`);
+                up.removeClass("text-blue-400"); down.removeClass("text-red-400");
+                if(r.user_vote==="up") up.addClass("text-blue-400");
+                else if(r.user_vote==="down") down.addClass("text-red-400");
+
+                // urutkan ulang TANPA .html()
+                const sorted=$("#comment-list .p-4").sort((a,b)=>{
+                    return parseInt($(b).find("[id^='score-']").text()) - parseInt($(a).find("[id^='score-']").text());
+                });
+                $("#comment-list").append(sorted);
+            },
+            error:()=>showToast("Gagal memproses vote","bg-red-600")
         });
     });
 });

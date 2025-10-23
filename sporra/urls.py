@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('news/', include('news.urls')),
     path('profile_user/', include('profile_user.urls')),
+    path('event/', include('event.urls')),
     path('forum/', include('forumdiskusi.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
