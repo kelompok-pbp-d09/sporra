@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('forumdiskusi', '0002_userprofile'),
-        ('news', '0005_alter_article_created_at'),
+        ('news', '0001_initial'),
     ]
 
     operations = [

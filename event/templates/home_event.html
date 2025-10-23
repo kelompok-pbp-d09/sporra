@@ -19,11 +19,17 @@
 
 <div class="flex items-center justify-between mb-6">
   <h1 class="text-3xl font-bold text-white">Daftar Event</h1>
-  <button id="refresh-button" title="Refresh data"
-      class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  
+  {# --- Tombol Refresh --- #}
+  <button id="refresh-button" 
+          class="inline-flex items-center bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 animate-spin hidden" id="loading-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+    <span id="refresh-text">Refresh</span>
   </button>
 </div>
 
@@ -42,14 +48,13 @@
 </div>
 
 <div id="events-container">
-  <!-- Events will be loaded here via AJAX -->
   <div class="text-center py-12">
     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
     <p class="text-gray-400 mt-4">Memuat event...</p>
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Confirm -->
 <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
   <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-96 text-white border border-gray-700">
     <div class="flex items-center justify-center mb-4">
@@ -77,49 +82,60 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   let currentCategory = '';
+  let currentPage = 1;
   let eventToDelete = null;
   const CURRENT_USER_ID = "{{ user.id|default_if_none:'' }}";
+  const EVENTS_PER_PAGE = 6; // event/hal
+  const globalToastContainer = document.getElementById('toast-container');
 
-  // Load events on page load
-  loadEvents(currentCategory);
+  loadEvents(currentCategory, currentPage);
 
-  // Category filter click handlers
+  // Category filter
   document.querySelectorAll('.category-filter').forEach(filter => {
     filter.addEventListener('click', function(e) {
       e.preventDefault();
       currentCategory = this.dataset.category;
-      
-      // Update active state
+      currentPage = 1;
+
       document.querySelectorAll('.category-filter').forEach(f => {
         f.classList.remove('bg-blue-600', 'text-white');
         f.classList.add('bg-gray-700', 'text-gray-300');
       });
       this.classList.remove('bg-gray-700', 'text-gray-300');
       this.classList.add('bg-blue-600', 'text-white');
-      
-      // Load filtered events
-      loadEvents(currentCategory);
+
+      loadEvents(currentCategory, currentPage);
     });
   });
 
   // Refresh button
-  document.getElementById('refresh-button').addEventListener('click', function() {
-    console.log('Refresh button clicked!');
-    loadEvents(currentCategory);
+  const refreshButton = document.getElementById('refresh-button');
+  const loadingSpinner = document.getElementById('loading-spinner');
+  const refreshIcon = document.getElementById('refresh-icon');
+  const refreshText = document.getElementById('refresh-text');
+
+  refreshButton.addEventListener('click', function() {
+    loadingSpinner.classList.remove('hidden');
+    refreshIcon.classList.add('hidden');
+    refreshText.textContent = 'Refreshing...';
+    refreshButton.disabled = true;
+    refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    loadEvents(currentCategory, currentPage, true);
   });
 
-  // Delete modal handlers
+  // Delete
   document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
   document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
   
-  // Close modal when clicking outside
+  // Close click outside
   document.getElementById('deleteModal').addEventListener('click', function(e) {
     if (e.target === this) {
       hideDeleteModal();
     }
   });
   
-  // Close modal with Escape key
+  //Close esc key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('deleteModal');
@@ -129,10 +145,72 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  function loadEvents(category) {
+  // Toast
+  function showToast(message, type = 'info') {
+    if (!globalToastContainer) return;
+
+    const toastElement = document.createElement('div');
+    toastElement.className = `p-4 rounded-lg shadow-lg flex items-start space-x-3 text-sm font-medium toast-enter w-full`; 
+
+    let bgColor = 'bg-blue-600';
+    let textColor = 'text-white';
+    let iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>`;
+    
+    if (type === 'success') {
+      bgColor = 'bg-green-600';
+      iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>`;
+    } else if (type === 'error') {
+      bgColor = 'bg-red-600';
+      iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>`;
+    }
+    
+    toastElement.classList.add(bgColor, textColor);
+
+    toastElement.innerHTML = `
+      <div class="flex-shrink-0">${iconSvg}</div>
+      <div class="flex-grow mr-2">${message}</div>
+      <div class="flex-shrink-0">
+        <button type="button" class="inline-flex rounded-md p-1 -m-1 focus:outline-none focus:ring-2 focus:ring-white opacity-70 hover:opacity-100 close-toast">
+          <span class="sr-only">Dismiss</span>
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    `;
+
+    const closeButton = toastElement.querySelector('.close-toast');
+    closeButton.addEventListener('click', () => removeToast(toastElement));
+
+    globalToastContainer.appendChild(toastElement);
+
+    requestAnimationFrame(() => {
+      toastElement.classList.remove('toast-enter');
+      toastElement.classList.add('toast-enter-active');
+    });
+
+    const autoCloseTimeout = setTimeout(() => removeToast(toastElement), 3000);
+
+    function removeToast(element) {
+      clearTimeout(autoCloseTimeout); 
+      element.classList.remove('toast-enter-active');
+      element.classList.add('toast-exit-active');
+      element.addEventListener('transitionend', () => {
+        if (element.parentNode) element.parentNode.removeChild(element);
+      }, { once: true }); 
+    }
+  }
+
+  function loadEvents(category, page = 1, isRefresh = false) {
     const container = document.getElementById('events-container');
     
-    // Show loading state
+    // loading state
     container.innerHTML = `
       <div class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
@@ -140,17 +218,31 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     `;
 
-    // Build URL with category parameter
     let url = '{% url "event:get_events_ajax" %}';
-    if (category) {
-      url += `?category=${category}`;
-    }
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    params.append('page', page);
+    if (params.toString()) url += `?${params.toString()}`;
 
     // Fetch events
     fetch(url)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(data => {
-        displayEvents(data);
+        displayEvents(data, page);
+
+        if (isRefresh) {
+          showToast('Daftar event berhasil diperbarui!', 'success');
+        }
+        
+        //  refresh button
+        if (isRefresh) {
+          resetRefreshButton();
+        }
       })
       .catch(error => {
         console.error('Error:', error);
@@ -159,49 +251,148 @@ document.addEventListener('DOMContentLoaded', function() {
             <p class="text-red-400">Terjadi kesalahan saat memuat event.</p>
           </div>
         `;
+        
+        if (isRefresh) {
+          showToast('Gagal memperbarui event.', 'error');
+          resetRefreshButton(true);
+        }
       });
   }
 
-  function displayEvents(data) {
+  function resetRefreshButton(isError = false) {
+    if (isError) {
+      refreshText.textContent = 'Error!';
+    } else {
+      refreshText.textContent = 'Refresh';
+    }
+    loadingSpinner.classList.add('hidden');
+    refreshIcon.classList.remove('hidden');
+    refreshButton.disabled = false;
+    refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+
+  function displayEvents(data, page) {
     const container = document.getElementById('events-container');
     let html = '';
 
+    // upcoming events
+    const upcomingEvents = data.upcoming_events || [];
+    const pastEvents = data.past_events || [];
+    
+    // Calculate both sections
+    const PAST_EVENTS_PER_PAGE = 3;
+    const startIdx = (page - 1) * EVENTS_PER_PAGE;
+    const endIdx = startIdx + EVENTS_PER_PAGE;
+    const paginatedUpcoming = upcomingEvents.slice(startIdx, endIdx);
+    
+    const pastStartIdx = (page - 1) * PAST_EVENTS_PER_PAGE;
+    const pastEndIdx = pastStartIdx + PAST_EVENTS_PER_PAGE;
+    const paginatedPast = pastEvents.slice(pastStartIdx, pastEndIdx);
+    
+    // Calculate total pages
+    const totalUpcomingPages = Math.ceil(upcomingEvents.length / EVENTS_PER_PAGE);
+    const totalPastPages = Math.ceil(pastEvents.length / PAST_EVENTS_PER_PAGE);
+    const totalPages = Math.max(totalUpcomingPages, totalPastPages);
+
     // Upcoming events section
-    if (data.upcoming_events && data.upcoming_events.length > 0) {
+    if (paginatedUpcoming.length > 0) {
       html += '<h2 class="text-2xl font-semibold text-white mb-4">Event yang Akan Datang</h2>';
-      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">';
+      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">';
       
-      data.upcoming_events.forEach(event => {
+      paginatedUpcoming.forEach(event => {
         html += createEventCard(event, false);
       });
       
       html += '</div>';
-    } else {
+    } else if (page === 1) {
       html += `
         <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12">
-          <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada artikel" class="mx-auto mb-4 w-48 h-48 object-contain">
+          <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada event" class="mx-auto mb-4 w-48 h-48 object-contain">
           <p class="text-gray-400 text-lg">Tidak ada event yang akan datang.</p>
+        </div>
+      `;
+    } else if (page > totalUpcomingPages && totalUpcomingPages > 0) {
+      html += `
+        <div class="text-center py-8">
+          <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada event" class="mx-auto mb-4 w-32 h-32 object-contain">
+          <p class="text-gray-400">Tidak ada event yang akan datang di halaman ini.</p>
         </div>
       `;
     }
 
     html += '<hr class="my-8 border-gray-700">';
 
-    // Past events section
-    if (data.past_events && data.past_events.length > 0) {
+    // Past events (3 per page)
+    if (paginatedPast.length > 0) {
       html += '<h2 class="text-2xl font-semibold text-gray-300 mb-4">Event yang Sudah Selesai</h2>';
       html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">';
       
-      data.past_events.forEach(event => {
+      paginatedPast.forEach(event => {
         html += createEventCard(event, true);
       });
       
       html += '</div>';
-    } else {
+    } else if (page === 1) {
       html += '<p class="text-gray-400">Belum ada event yang selesai.</p>';
     }
 
+    if (totalPages > 1) {
+      html += createPaginationControls(page, totalPages);
+    }
+
     container.innerHTML = html;
+    
+    attachPaginationHandlers();
+  }
+
+  function createPaginationControls(currentPage, totalPages) {
+    let html = '<nav class="flex justify-center mt-8 space-x-2">';
+    
+    // Button First & Previous
+    if (currentPage > 1) {
+      html += `
+        <button data-page="1" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+          &laquo; Awal
+        </button>
+        <button data-page="${currentPage - 1}" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+          Sebelumnya
+        </button>
+      `;
+    }
+    
+    // info
+    html += `
+      <span class="py-2 px-4 bg-gray-800 text-gray-400 rounded-lg">
+        Halaman ${currentPage} dari ${totalPages}
+      </span>
+    `;
+    
+    // Button Next & Last
+    if (currentPage < totalPages) {
+      html += `
+        <button data-page="${currentPage + 1}" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+          Selanjutnya
+        </button>
+        <button data-page="${totalPages}" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+          Akhir &raquo;
+        </button>
+      `;
+    }
+    
+    html += '</nav>';
+    return html;
+  }
+
+  function attachPaginationHandlers() {
+    document.querySelectorAll('.pagination-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const page = parseInt(this.dataset.page);
+        currentPage = page;
+        loadEvents(currentCategory, page);
+        
+        document.getElementById('events-container').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
   }
 
   function createEventCard(event, isPast) {
@@ -286,20 +477,25 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (response.ok) {
         hideDeleteModal();
-        loadEvents(currentCategory);
-        // Optional: Show success message
-        console.log('Event berhasil dihapus!');
+        showToast('Event berhasil dihapus!', 'success');
+        loadEvents(currentCategory, currentPage);
       } else {
-        console.error('Gagal menghapus event');
+        showToast('Gagal menghapus event.', 'error');
       }
     } catch (error) {
       console.error('Error:', error);
+      showToast('Terjadi kesalahan saat menghapus event.', 'error');
     }
   }
 
-  // Expose functions to global scope for onclick handlers
   window.showDeleteModal = showDeleteModal;
   window.escapeHtml = escapeHtml;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('created') === 'true') {
+    showToast('Event berhasil ditambahkan!', 'success');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 });
 </script>
 {% endblock content %}
