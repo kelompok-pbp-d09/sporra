@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.contrib.messages import constants as messages
 # Load environment variables from .env file
 load_dotenv()
 
@@ -33,6 +34,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "afero-aqil-sporra.pbp.cs.ui.ac.id"]
 
+CSRF_TRUSTED_ORIGINS = ['https://afero-aqil-sporra.pbp.cs.ui.ac.id']
 
 # Application definition
 
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     'profile_user',
     'event',
     'forumdiskusi',
+    'ticketing',
 ]
 
 MIDDLEWARE = [
@@ -155,7 +158,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-# URL buat django simpan image
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',       
+    messages.INFO: 'info',        
+    messages.SUCCESS: 'success',   
+    messages.WARNING: 'warning',   
+    messages.ERROR: 'error',
+}

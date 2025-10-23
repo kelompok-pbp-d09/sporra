@@ -14,7 +14,7 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = ["judul", "deskripsi", "date", "lokasi", "kategori", "maksimal_peserta", "harga"]
+        fields = ["judul", "deskripsi", "date", "lokasi", "kategori"]
 
     def clean_date(self):
         date_str = self.cleaned_data.get("date", "").strip()

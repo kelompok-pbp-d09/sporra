@@ -11,7 +11,9 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Article
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
+from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 
 
 # --- View Landing page ---
@@ -86,22 +88,40 @@ class ArticleDetailView(DetailView):
 
 # --- CREATE View ---
 
-class ArticleCreateView(LoginRequiredMixin, CreateView):
+class ArticleCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Article
     template_name = 'news/article_form.html'
     fields = ['title', 'content', 'thumbnail', 'category']
+    success_message = "Artikel '%(title)s' berhasil dibuat!"
     
     def form_valid(self, form):
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+    
+        # Increment news_created counter di UserProfile
+        user_profile = self.request.user.userprofile
+        user_profile.increment_news()
+
+        return response
 
 
 # --- UPDATE View ---
 
-class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class ArticleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Article
     template_name = 'news/article_form.html'
     fields = ['title', 'content', 'thumbnail', 'category']
+    success_message = "Artikel '%(title)s' berhasil diperbarui!"
+
+    def form_valid(self, form):
+        if form.has_changed():
+            self.object = form.save()
+            messages.success(self.request, f"Artikel '{self.object.title}' berhasil diperbarui!")
+
+            return HttpResponseRedirect(self.get_success_url()) 
+        else:
+            messages.info(self.request, "Tidak ada perubahan yang disimpan.")
+            return HttpResponseRedirect(self.get_success_url())
 
     def test_func(self):
         article = self.get_object()
@@ -110,12 +130,22 @@ class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 # --- DELETE View ---
 
-class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class ArticleDeleteView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
     template_name = 'news/article_confirm_delete.html'
     success_url = reverse_lazy('news:article-list')
 
+    def post(self, request, *args, **kwargs):
+
+        self.object = self.get_object()
+        title_to_delete = self.object.title 
+
+        response = super().post(request, *args, **kwargs) 
+        
+        messages.error(self.request, f"Artikel '{title_to_delete}' berhasil dihapus!") 
+        
+        return response
+
     def test_func(self):
-        # This test ensures only the author can delete
         article = self.get_object()
         return self.request.user == article.author or self.request.user.is_superuser

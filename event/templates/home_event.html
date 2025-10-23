@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
         <hr class="my-2 ${borderClass}">
         <p class="text-gray-400 text-sm mb-1 bold">${escapeHtml(event.kategori_display)}</p>
         <p class="text-gray-400 text-sm mb-1">📍 ${escapeHtml(event.lokasi)}</p>
-        <p class="text-gray-400 text-sm mb-4">💰 Rp${escapeHtml(event.harga)}</p>
         <p class="${dateClass} text-sm mb-3">${dateIcon}${escapeHtml(event.date_formatted)}</p>
         <a href="${event.detail_url}">
           <button class="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">

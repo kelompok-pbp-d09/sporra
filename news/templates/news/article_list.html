@@ -49,6 +49,64 @@
     const loadingSpinner = document.getElementById('loading-spinner');
     const refreshIcon = document.getElementById('refresh-icon');
     const refreshText = document.getElementById('refresh-text');
+    // Ambil container toast global dari base.html
+    const globalToastContainer = document.getElementById('toast-container'); 
+
+    // --- FUNGSI BARU UNTUK MENAMPILKAN TOAST REFRESH ---
+    function showRefreshToast(message, type = 'info') {
+        if (!globalToastContainer) return; // Jangan lakukan apa-apa jika container tidak ada
+
+        const toastElement = document.createElement('div');
+        toastElement.className = `p-4 rounded-lg shadow-lg flex items-start space-x-3 text-sm font-medium toast-enter w-full`; 
+
+        let bgColor = 'bg-blue-600'; // Default info
+        let textColor = 'text-white';
+        let iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Info icon
+        
+        if (type === 'success') {
+             bgColor = 'bg-green-600';
+             iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Success icon
+        } else if (type === 'error') {
+             bgColor = 'bg-red-600';
+             iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Error icon
+        }
+        
+        toastElement.classList.add(bgColor, textColor);
+
+        toastElement.innerHTML = `
+            <div class="flex-shrink-0">${iconSvg}</div>
+            <div class="flex-grow mr-2">${message}</div>
+            <div class="flex-shrink-0">
+                <button type="button" class="inline-flex rounded-md p-1 -m-1 focus:outline-none focus:ring-2 focus:ring-white opacity-70 hover:opacity-100 close-toast">
+                    <span class="sr-only">Dismiss</span>
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> </svg>
+                </button>
+            </div>
+        `;
+
+        const closeButton = toastElement.querySelector('.close-toast');
+        closeButton.addEventListener('click', () => removeToast(toastElement));
+
+        globalToastContainer.appendChild(toastElement);
+
+        requestAnimationFrame(() => {
+            toastElement.classList.remove('toast-enter');
+            toastElement.classList.add('toast-enter-active');
+        });
+
+        const autoCloseTimeout = setTimeout(() => removeToast(toastElement), 3000); // Durasi lebih singkat (3 detik)
+
+        function removeToast(element) {
+            clearTimeout(autoCloseTimeout); 
+            element.classList.remove('toast-enter-active');
+            element.classList.add('toast-exit-active');
+            element.addEventListener('transitionend', () => {
+                if (element.parentNode) element.parentNode.removeChild(element);
+            }, { once: true }); 
+        }
+    }
+    // --- AKHIR FUNGSI TOAST ---
+
 
     refreshButton.addEventListener('click', () => {
         // Tampilkan loading & disable tombol
@@ -58,40 +116,44 @@
         refreshButton.disabled = true;
         refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
         
-        // Dapatkan URL saat ini (untuk mempertahankan filter kategori)
         const currentUrl = new URL(window.location.href);
-        
-        // Tambahkan/Update parameter ajax=true
         currentUrl.searchParams.set('ajax', 'true');
-        // Hapus parameter page agar selalu refresh ke halaman 1
         currentUrl.searchParams.delete('page'); 
 
         fetch(currentUrl.toString(), {
             method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest', // Header standar AJAX
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(response => {
             if (!response.ok) {
+                // Jika error, lempar error agar ditangkap .catch()
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json(); // Kita mengharapkan JSON dari view
+            return response.json(); 
         })
         .then(data => {
-            // Ganti isi container dengan HTML baru dari response JSON
+            // Ganti isi container
             articleContainer.innerHTML = data.html; 
+            // --- PANGGIL FUNGSI TOAST SUKSES DI SINI ---
+            showRefreshToast('Daftar berita berhasil diperbarui!', 'success'); 
+            // ------------------------------------------
         })
         .catch(error => {
             console.error('Error fetching articles:', error);
-            refreshText.textContent = 'Error!';
-            // Tampilkan pesan error ke user jika perlu
+            // --- PANGGIL FUNGSI TOAST ERROR DI SINI ---
+            showRefreshToast('Gagal memperbarui berita.', 'error');
+            // -----------------------------------------
+            // Kembalikan teks tombol ke 'Error!' atau 'Refresh'
+            refreshText.textContent = 'Error!'; 
         })
         .finally(() => {
             // Sembunyikan loading & enable tombol lagi
+            // Hanya kembalikan teks ke 'Refresh' jika tidak error
+            if (refreshText.textContent !== 'Error!') {
+                 refreshText.textContent = 'Refresh';
+            }
             loadingSpinner.classList.add('hidden');
             refreshIcon.classList.remove('hidden');
-            refreshText.textContent = 'Refresh';
             refreshButton.disabled = false;
             refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
         });

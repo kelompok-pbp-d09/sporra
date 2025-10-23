@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'event:event_detail' event.id %}" 
+     class="font-custom1 fixed top-24 left-6 z-999 flex items-center space-x-2 backdrop-blur-md bg-gray-700/80 text-gray-300 hover:bg-blue-600 hover:text-white transition-all px-4 py-2 rounded-full shadow-md font-medium">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    <span>Detail Event</span>
+  </a>
+</div>
+
+<div class="max-w-lg mx-auto mt-16 bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+  <h1 class="text-2xl font-bold text-white mb-2 text-center">Pesan Tiket untuk</h1>
+  <h2 class="text-xl text-blue-400 mb-6 text-center">{{ event.judul }}</h2>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="p-3 mb-4 rounded text-center font-medium
+          {% if message.tags == 'success' %} bg-green-800 text-green-200 {% endif %}
+          {% if message.tags == 'error' %} bg-red-800 text-red-200 {% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if form.ticket.field.choices %}
+    <!-- Form hanya ditampilkan jika ada tiket -->
+    <form id="book-ticket-form" method="POST" 
+    action="{% url 'ticketing:book_ticket' event.id %}" class="space-y-5">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-sm text-gray-200 mb-2">{{ form.ticket.label }}</label>
+        <div class="space-y-2">
+          {% for radio in form.ticket %}
+            <label class="flex items-center p-3 bg-gray-700 rounded-lg cursor-pointer transition-all duration-200 border border-transparent hover:bg-gray-600 has-[:checked]:bg-blue-800 has-[:checked]:border-blue-500">
+              {{ radio.tag }}
+              <div class="ml-3">
+                <span class="font-semibold text-white">{{ radio.choice_label }}</span>
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+        {% for error in form.ticket.errors %}
+          <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-200 mb-1">{{ form.quantity.label }}</label>
+        {{ form.quantity }}
+        {% for error in form.quantity.errors %}
+          <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <style>
+        input[type='number'] {
+          width: 100%;
+          padding: 0.6rem 0.75rem;
+          border-radius: 0.5rem;
+          border: 1px solid #4B5563;
+          background-color: #374151;
+          color: #E5E7EB;
+          font-size: 0.95rem;
+          transition: all 0.2s ease;
+        }
+        input[type='number']:focus {
+          outline: 2px solid #3B82F6;
+          outline-offset: 2px;
+          border-color: #3B82F6;
+          background-color: #4B5563;
+        }
+        
+        /* Style untuk button disabled */
+        button[type="submit"]:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: scale(1) !important;
+        }
+      </style>
+
+      <button type="submit" id="submit-btn"
+              class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg w-full font-semibold shadow-lg transition-transform hover:scale-105">
+        Konfirmasi Pesanan
+      </button>
+    </form>
+
+{% else %}
+<div class="text-center py-14 bg-gray-900/40 rounded-2xl border border-gray-700 shadow-inner backdrop-blur-sm">
+  <!-- Gambar Tiket -->
+  <img src="{% static 'images/no-article-found.png' %}" 
+       alt="No tickets available"
+       class="mx-auto h-32 w-auto mb-6 rounded-lg shadow-lg object-contain transition-transform duration-300 hover:scale-105">
+
+  <!-- Teks Informasi -->
+  <h3 class="text-2xl text-gray-200 font-bold">Belum Ada Tiket Tersedia 😢</h3>
+  <p class="text-gray-400 mt-2 max-w-md mx-auto">
+    Penyelenggara belum membuka penjualan tiket untuk event ini.
+    Silakan cek kembali nanti atau jelajahi event menarik lainnya!
+  </p>
+
+  <!-- Tombol Kembali -->
+  <a href="{% url 'event:home_event' %}"
+     class="mt-8 inline-block bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-700 hover:to-green-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-transform duration-200 hover:scale-105">
+    🔙 Kembali ke Daftar Event
+  </a>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('#book-ticket-form');
+  if (!form) return;
+
+  const submitButton = document.querySelector('#submit-btn');
+  const originalButtonText = submitButton.innerHTML;
+  let isSubmitting = false; // Prevent double submission
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    // Cegah submit berganda
+    if (isSubmitting) {
+      console.log('Already submitting, please wait...');
+      return;
+    }
+
+    isSubmitting = true;
+    submitButton.disabled = true;
+    submitButton.innerHTML = 'Memproses...';
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Response dari server:', data);
+
+      if (data.status === 'success') {
+        window.location.href = data.redirect_url;
+      } else {
+        // Reset button jika error
+        isSubmitting = false;
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        
+        alert('❌ ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      
+      // Reset button jika error
+      isSubmitting = false;
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+      
+      alert('❌ Terjadi kesalahan di server.');
+    });
+  });
+});
+</script>
+
+</div>
+{% endblock %}
