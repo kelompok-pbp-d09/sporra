@@ -6,6 +6,7 @@ from .models import Ticket, Booking
 from .forms import BookingForm, TicketForm ,TicketSelectionForm
 from event.models import Event
 from django.db import IntegrityError  
+from django.urls import reverse
 
 
 @login_required
@@ -14,46 +15,60 @@ def book_ticket(request, event_id):
 
     if request.method == 'POST':
         form = TicketSelectionForm(request.POST, event=event)
-        
+
         if form.is_valid():
             ticket = form.cleaned_data['ticket']
             quantity = form.cleaned_data['quantity']
 
             if quantity > ticket.available:
-                messages.error(request, f'Maaf, stok tiket {ticket.get_ticket_type_display()} hanya tersisa {ticket.available}.')
+                msg = f'Maaf, stok tiket {ticket.get_ticket_type_display()} hanya tersisa {ticket.available}.'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': msg})
+                messages.error(request, msg)
+
             elif quantity <= 0:
-                 messages.error(request, 'Jumlah tiket harus lebih dari 0.')
+                msg = 'Jumlah tiket harus lebih dari 0.'
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'status': 'error', 'message': msg})
+                messages.error(request, msg)
+
             else:
                 booking, created = Booking.objects.get_or_create(
                     user=request.user,
                     ticket=ticket,
-                    # 'defaults' hanya dipakai jika booking BARU dibuat
-                    defaults={'quantity': 0, 'total_price': 0} 
+                    defaults={'quantity': 0, 'total_price': 0}
                 )
 
-                # Tambahkan jumlah baru ke booking yang ada (atau yang baru dibuat)
                 booking.quantity += quantity
-                # Hitung ulang total harga
-                booking.total_price = ticket.price * booking.quantity 
-                booking.save() # Simpan perubahan booking
+                booking.total_price = ticket.price * booking.quantity
+                booking.save()
+
                 ticket.available -= quantity
                 ticket.save()
 
-                if created:
-                    messages.success(request, 'Tiket berhasil dipesan!')
-                else:
-                    messages.success(request, f'Jumlah tiket berhasil diperbarui. Anda sekarang memiliki {booking.quantity}.')
+                msg = (
+                    'Tiket berhasil dipesan!' if created
+                    else f'Jumlah tiket diperbarui. Sekarang kamu punya {booking.quantity}.'
+                )
+
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': msg,
+                        'redirect_url': reverse('event:home_event')
+                    })
                 
-                return redirect('event:home_event') 
+                messages.success(request, msg)
+                return redirect('event:home_event')
 
-    else: 
-        form = TicketSelectionForm(event=event) 
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Form tidak valid'})
 
-    context = {
-        'event': event,
-        'form': form
-    }
-    return render(request, 'book_ticket.html', context)
+    else:
+        form = TicketSelectionForm(event=event)
+
+    return render(request, 'book_ticket.html', {'event': event, 'form': form})
 
 @login_required
 def my_bookings(request):
@@ -61,9 +76,22 @@ def my_bookings(request):
     return render(request, "my_bookings.html", {"bookings": bookings})
 
 def all_tickets(request):
-    tickets = Ticket.objects.select_related('event').all()
-    return render(request, "all_tickets.html", {"tickets": tickets})
+        tickets = Ticket.objects.select_related('event').all()
+        return render(request, "all_tickets.html", {"tickets": tickets})
 
+def get_tickets(request):
+    tickets = Ticket.objects.select_related('event').all()
+    data = []
+    for t in tickets:
+        data.append({
+            'id': str(t.id),
+            'event_id': str(t.event.id),
+            'event_title': t.event.judul,
+            'ticket_type': t.ticket_type,
+            'price': t.price,
+            'available': t.available,
+        })
+    return JsonResponse({'tickets': data})
 
 @login_required
 def create_ticket(request):

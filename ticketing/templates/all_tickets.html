@@ -3,127 +3,123 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
   <div class="max-w-6xl mx-auto">
 
-<!-- Header + Tombol Joined Event -->
-<div class="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-gray-700 pb-4">
-  <!-- Judul -->
-  <h1 class="text-4xl font-bold text-white text-center sm:text-left mb-4 sm:mb-0">
-    🎫 Semua Tiket yang Tersedia
-  </h1>
+    <!-- Header + Tombol Joined Event -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-gray-700 pb-4">
+      <h1 class="text-4xl font-bold text-white text-center sm:text-left mb-4 sm:mb-0">
+        🎫 Semua Tiket yang Tersedia
+      </h1>
 
-  <!-- Tombol Joined Event -->
-  {% if user.is_authenticated %}
-  <a href="{% url 'ticketing:my_bookings' %}" 
-     class="inline-flex items-center justify-center px-5 py-3 rounded-lg font-semibold text-white 
-            bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 
-            transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95">
-    ⭐ Joined Events
-  </a>
-  {% endif %}
-</div>
-
-    <!-- Daftar Tiket -->
-    <div id="tickets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {% for ticket in tickets %}
-      <div class="ticket-card bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-blue-500/20 hover:scale-105" data-id="{{ ticket.id }}">
-        
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-          <div class="flex items-center justify-between">
-            <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold uppercase tracking-wider">
-              {{ ticket.ticket_type }}
-            </span>
-            <span class="text-white text-xs opacity-75">
-              {% if ticket.available > 0 %}
-                ✓ Available
-              {% else %}
-                ✗ Sold Out
-              {% endif %}
-            </span>
-          </div>
-        </div>
-
-        <!-- Isi Kartu -->
-        <div class="p-6">
-          <h3 class="text-xl font-bold text-white mb-4 line-clamp-2 min-h-[3.5rem]">
-            {{ ticket.event.judul }}
-          </h3>
-
-          <div class="space-y-3 mb-6">
-            <div class="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-              <span class="text-gray-400 text-sm">Harga</span>
-              <span class="text-green-400 font-bold text-lg">
-                Rp {{ ticket.price|floatformat:0 }}
-              </span>
-            </div>
-
-            <div class="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-              <span class="text-gray-400 text-sm">Tersedia</span>
-              <span class="available font-bold text-lg 
-                    {% if ticket.available > 10 %}text-blue-400
-                    {% elif ticket.available > 0 %}text-yellow-400
-                    {% else %}text-red-400{% endif %}">
-                {{ ticket.available }} tiket
-              </span>
-            </div>
-          </div>
-
-          <!-- Tombol Pesan -->
-          <button class="book-btn w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform active:scale-95 
-            {% if ticket.available == 0 %}
-              bg-gray-600 text-gray-400 cursor-not-allowed
-            {% else %}
-              bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl
-            {% endif %}" 
-            data-event-id="{{ ticket.event.id }}"
-            {% if ticket.available == 0 %}disabled{% endif %}>
-            {% if ticket.available == 0 %}
-              🚫 Sold Out
-            {% else %}
-              🎟️ Pesan Tiket
-            {% endif %}
-          </button>
-
-          <div class="message mt-4 text-center text-sm font-medium min-h-[1.5rem]"></div>
-        </div>
-
-        <div class="px-6 pb-4 pt-0 text-xs text-gray-500 flex justify-between">
-          <span>🎭 Event Ticket</span>
-        </div>
-      </div>
-
-      {% empty %}
-      <div class="col-span-full">
-        <div class="text-center py-16 bg-gray-800/50 rounded-xl border border-gray-700">
-          <div class="text-6xl mb-4">🎫</div>
-          <p class="text-gray-400 text-lg">Belum ada tiket tersedia.</p>
-          <p class="text-gray-500 text-sm mt-2">Tiket akan segera ditambahkan!</p>
-        </div>
-      </div>
-      {% endfor %}
+      {% if user.is_authenticated %}
+      <a href="{% url 'ticketing:my_bookings' %}" 
+        class="inline-flex items-center justify-center px-5 py-3 rounded-lg font-semibold text-white 
+              bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 
+              transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95">
+        ⭐ Joined Events
+      </a>
+      {% endif %}
     </div>
+
+    <!-- Loader -->
+    <div id="loading" class="text-center text-gray-400 py-10">⏳ Memuat tiket...</div>
+
+    <!-- Container tiket -->
+    <div id="tickets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
   </div>
 </div>
 
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const baseUrl = "{% url 'ticketing:book_ticket' '00000000-0000-0000-0000-000000000000' %}";
-  document.querySelectorAll('.book-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      if (e.currentTarget.disabled) return;
-      const eventId = e.currentTarget.dataset.eventId;
-      const finalUrl = baseUrl.replace('00000000-0000-0000-0000-000000000000', eventId);
-      window.location.href = finalUrl;
+document.addEventListener('DOMContentLoaded', async () => {
+  const container = document.getElementById('tickets-container');
+  const loading = document.getElementById('loading');
+
+  try {
+    const response = await fetch("{% url 'ticketing:get_tickets' %}");
+    const data = await response.json();
+
+    loading.style.display = 'none';
+
+    if (data.tickets.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-16 bg-gray-800/50 rounded-xl border border-gray-700">
+          <div class="text-6xl mb-4">🎫</div>
+          <p class="text-gray-400 text-lg">Belum ada tiket tersedia.</p>
+          <p class="text-gray-500 text-sm mt-2">Tiket akan segera ditambahkan!</p>
+        </div>`;
+      return;
+    }
+
+    data.tickets.forEach(ticket => {
+      const card = document.createElement('div');
+      const availableClass = ticket.available === 0
+        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+        : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl";
+
+      const availableText = ticket.available === 0
+        ? "🚫 Sold Out"
+        : "🎟️ Pesan Tiket";
+
+      const availableStatus = ticket.available > 0 ? "✓ Available" : "✗ Sold Out";
+
+      card.className = "ticket-card bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300 hover:shadow-blue-500/20 hover:scale-105";
+      card.innerHTML = `
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
+          <div class="flex items-center justify-between">
+            <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold uppercase tracking-wider">${ticket.ticket_type}</span>
+            <span class="text-white text-xs opacity-75">${availableStatus}</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-white mb-4 line-clamp-2 min-h-[3.5rem]">${ticket.event_title}</h3>
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <span class="text-gray-400 text-sm">Harga</span>
+              <span class="text-green-400 font-bold text-lg">Rp ${Math.floor(ticket.price).toLocaleString()}</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <span class="text-gray-400 text-sm">Tersedia</span>
+              <span class="font-bold text-lg ${ticket.available > 10 ? 'text-blue-400' : ticket.available > 0 ? 'text-yellow-400' : 'text-red-400'}">
+                ${ticket.available} tiket
+              </span>
+            </div>
+          </div>
+          <button class="book-btn w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform active:scale-95 ${availableClass}" data-event-id="${ticket.event_id}" ${ticket.available === 0 ? 'disabled' : ''}>
+            ${availableText}
+          </button>
+        </div>`;
+      
+      container.appendChild(card);
+    });
+
+    // ✅ TAMBAHKAN EVENT LISTENER SETELAH SEMUA CARD DIBUAT
+    attachBookingHandlers();
+
+  } catch (err) {
+    loading.textContent = "❌ Gagal memuat tiket.";
+    console.error(err);
+  }
+});
+
+// ✅ FUNCTION UNTUK HANDLE KLIK BUTTON
+function attachBookingHandlers() {
+  const bookButtons = document.querySelectorAll('.book-btn');
+  
+  bookButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Cek apakah button disabled (sold out)
+      if (this.disabled) {
+        alert('❌ Tiket sudah habis!');
+        return;
+      }
+
+      const eventId = this.getAttribute('data-event-id');
+      
+      // Redirect ke halaman booking
+      window.location.href = `/ticketing/book/${eventId}/`;
+      
     });
   });
-});
+}
 </script>
+
 {% endblock %}
