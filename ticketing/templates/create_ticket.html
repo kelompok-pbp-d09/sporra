@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Tombol Kembali -->
+    <div class="mb-4">
+        <a href="{% url 'event:home_event' %}" 
+           class="inline-flex items-center px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Kembali
+        </a>
+    </div>
+
+
+
+<div class="max-w-md mx-auto mt-8 bg-gray-800 p-6 rounded shadow">
+
+    <h1 class="text-xl font-bold text-white mb-4">Buat Tiket Baru</h1>
+
+ 
+    <!-- Tampilkan error dari form -->
+    {% if form.errors %}
+    <div class="mb-4 p-3 rounded bg-red-600 text-white">
+        <strong>Error di form:</strong>
+        <ul class="list-disc ml-5 mt-2">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <li><strong>{{ field }}:</strong> {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-1">Event *</label>
+            {{ form.event }}
+            {% if form.event.errors %}
+                <p class="text-red-400 text-sm mt-1">{{ form.event.errors.0 }}</p>
+            {% endif %}
+            
+        </div>
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-1">Tipe Tiket *</label>
+            {{ form.ticket_type }}
+        </div>
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-1">Harga *</label>
+            {{ form.price }}
+        </div>
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-1">Jumlah Tersedia *</label>
+            {{ form.available }}
+        </div>
+
+        <style>
+            input[type='text'], input[type='number'], select {
+                width: 100%;
+                padding: 0.5rem 0.75rem;
+                border-radius: 0.375rem;
+                border: 1px solid #4B5563;
+                background-color: #374151;
+                color: #E5E7EB;
+                font-size: 0.95rem;
+            }
+            input:focus, select:focus {
+                outline: 2px solid #3B82F6;
+                outline-offset: 2px;
+                border-color: #3B82F6;
+                background-color: #4B5563;
+            }
+        </style>
+
+        <button type="submit" 
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2 w-full"
+                {% if event_count == 0 %}disabled{% endif %}>
+            {% if event_count == 0 %}Buat Event Dulu{% else %}Simpan Tiket{% endif %}
+        </button>
+    </form>
+</div>
+{% endblock %}

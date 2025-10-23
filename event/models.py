@@ -27,7 +27,7 @@ class Event(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return self.title
+        return self.judul
 
     def increment_views(self):
         self.event_views += 1
