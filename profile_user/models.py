@@ -13,13 +13,11 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.URLField(blank=True, null=True)
-
-    # sport_interest = models.CharField(max_length=100, blank=True, null=True)
-    # joined_date = models.DateTimeField(auto_now_add=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  #Role field 
-
     post_created = models.PositiveIntegerField(default=0) #banyak post yang telah dibuat
     news_created = models.PositiveIntegerField(default=0) #banyak berita yang telah dibuat
+    # events_created = models.PositiveIntegerField(default=0) #banyak event yang telah dibuat
+
 
     booked_events = models.ManyToManyField(Event, blank=True, related_name='peserta')
 
@@ -39,13 +37,16 @@ class UserProfile(models.Model):
         self.news_created += 1
         self.save()
 
+    def increment_events(self):
+        self.events_created += 1
+        self.save()
+
     def add_status(self, content):
         return Status.objects.create(user=self, content=content)
 
     def get_statuses(self):
         return self.statuses.all()
 
-    #tambahkan fitur event yang sedang diikuti
     #filter informasi
     #STATUS
 
