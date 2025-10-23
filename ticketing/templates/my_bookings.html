@@ -1,53 +1,79 @@
 {% extends 'base.html' %}
 {% load tz %}
 {% load static %}
+
 {% block content %}
-<div class="container mx-auto py-10 text-white">
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
+  <div class="max-w-6xl mx-auto">
+   
+<!-- Header Section -->
+<div class="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-gray-700 pb-4">
 
-  <h1 class="text-3xl font-bold mb-8 text-center">🎟️ My Bookings</h1>
+  <!-- Judul di kiri -->
+  <h1 class="text-5xl font-bold text-white mb-4 sm:mb-0 text-center sm:text-left">
+    🎟️ My Bookings
+  </h1>
 
-  {% if bookings %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {% for booking in bookings %}
-        <div class="bg-gray-800 hover:bg-gray-750 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
-          
-          <!-- Header -->
-          <div class="flex justify-between items-start mb-3">
-            <h2 class="text-xl font-semibold text-white">{{ booking.ticket.event.judul }}</h2>
-            <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-              Joined
-            </span>
+  <!-- Tombol di kanan -->
+  <a href="{% url 'event:home_event' %}" 
+     class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg shadow transition">
+    <i class="fa-solid fa-arrow-left"></i>
+    Kembali ke Event
+  </a>
+
+</div>
+    {% if bookings %}
+      <!-- Grid Booking -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for booking in bookings %}
+          <div class="bg-gray-800 hover:bg-gray-750 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-3">
+              <h2 class="text-xl font-semibold text-white">{{ booking.ticket.event.judul }}</h2>
+              <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                Joined
+              </span>
+            </div>
+
+            <hr class="border-gray-700 my-3">
+
+            <!-- Event Info -->
+            <p class="text-gray-400 text-sm mb-1">📅 {{ booking.ticket.event.date|date:"d M Y" }}</p>
+            <p class="text-gray-400 text-sm mb-1">📍 {{ booking.ticket.event.lokasi|default:"Lokasi belum ditentukan" }}</p>
+
+            <!-- Booking Detail -->
+            <div class="mt-4 bg-gray-700/40 rounded-lg p-3">
+              <p class="text-sm"><span class="font-medium text-blue-400">Quantity:</span> {{ booking.quantity }}</p>
+              <p class="text-sm"><span class="font-medium text-blue-400">Total Harga:</span> Rp{{ booking.total_price|floatformat:0 }}</p>
+              <p class="text-sm text-gray-400">📆 Dipesan: {{ booking.booked_at|date:"d M Y, H:i" }}</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-5 flex justify-between items-center">
+              <a href="{% url 'event:event_detail' booking.ticket.event.id %}" 
+                 class="bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition duration-200">
+                🔍 Lihat Event
+              </a>
+            </div>
+
           </div>
-
-          <hr class="border-gray-700 my-3">
-
-          <!-- Event Info -->
-          <p class="text-gray-400 text-sm mb-1">📅 {{ booking.ticket.event.date|date:"d M Y" }}</p>
-          <p class="text-gray-400 text-sm mb-1">📍 {{ booking.ticket.event.lokasi|default:"Lokasi belum ditentukan" }}</p>
-
-          <!-- Booking Detail -->
-          <div class="mt-4 bg-gray-700/40 rounded-lg p-3">
-            <p class="text-sm"><span class="font-medium text-blue-400">Quantity:</span> {{ booking.quantity }}</p>
-            <p class="text-sm"><span class="font-medium text-blue-400">Total Harga:</span> Rp{{ booking.total_price|floatformat:0 }}</p>
-            <p class="text-sm text-gray-400">📆 Dipesan: {{ booking.booked_at|date:"d M Y, H:i" }}</p>
-          </div>
-
-          <!-- Footer -->
-          <div class="mt-5 flex justify-between items-center">
-            <a href="{% url 'event:event_detail' booking.ticket.event.id %}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition duration-200">
-              Lihat Event
-            </a>
-          </div>
-
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="text-center py-20">
-      <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada booking" class="mx-auto mb-6 w-40 h-40 opacity-70">
-      <p class="text-gray-400 text-lg">Kamu belum pernah booking event apapun 😢</p>
-    </div>
-  {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Kalau Belum Ada Booking -->
+      <div class="text-center py-20 bg-gray-800/40 rounded-xl border border-gray-700 shadow-inner">
+        <img src="{% static 'images/no-article-found.png' %}" 
+             alt="Tidak ada booking" 
+             class="mx-auto mb-6 w-40 h-40 opacity-70">
+        <p class="text-gray-300 text-lg font-semibold">Kamu belum pernah booking event apapun 😢</p>
+        <p class="text-gray-500 mt-2">Yuk, lihat event menarik dan pesan tiket sekarang!</p>
+        <a href="{% url 'event:home_event' %}"
+           class="mt-6 inline-block bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-transform duration-200 hover:scale-105">
+          🎫 Lihat Event
+        </a>
+      </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
