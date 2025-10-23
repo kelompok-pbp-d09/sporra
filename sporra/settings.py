@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.contrib.messages import constants as messages
 # Load environment variables from .env file
 load_dotenv()
 
@@ -153,3 +154,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media URL
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',       
+    messages.INFO: 'info',        
+    messages.SUCCESS: 'success',   
+    messages.WARNING: 'warning',   
+    messages.ERROR: 'error',
+}

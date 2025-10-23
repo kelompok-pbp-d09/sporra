@@ -1,31 +1,15 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SPORRA{% endblock %}</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <!-- This now correctly links to the file in your project's static folder -->
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    <style>
-        /* A good place for a project-wide font */
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-gray-900 text-white ">
 <!doctype html>
-<html lang="en" class="dark"> <head>
+<html lang="en" class="dark"> 
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SPORRA - Sports News</title>
     
-    {% load static %}
+    <title>{% block title %}SPORRA{% endblock %} - Sports News</title> 
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
-      // Kustomisasi Tailwind untuk dark mode typography
       tailwind.config = {
         darkMode: 'class',
         theme: {
@@ -47,9 +31,41 @@
         },
       }
     </script>
-  </head>
-  <body class="bg-gray-900 text-gray-200 antialiased min-h-screen flex flex-col">
 
+    <link rel="stylesheet" href="{% static 'css/global.css' %}"> 
+    
+    {% block extra_css %}{% endblock %}
+
+    {# --- CSS KHUSUS UNTUK TOAST TRANSITION --- #}
+    <style>
+      .toast-enter { opacity: 0; transform: translateX(100%); }
+      .toast-enter-active { opacity: 1; transform: translateX(0); transition: opacity 300ms, transform 300ms; }
+      .toast-exit { opacity: 1; transform: translateX(0); }
+      .toast-exit-active { opacity: 0; transform: translateX(100%); transition: opacity 300ms, transform 300ms; }
+      
+    </style>
+    {# -------------------------------------- #}
+
+</head>
+<body class="bg-gray-900 text-gray-200 antialiased min-h-screen flex flex-col">
+
+    {# --- CONTAINER UNTUK MENAMPUNG TOAST --- #}
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2 w-full max-w-xs sm:max-w-sm">
+
+    </div>
+    {# -------------------------------------- #}
+
+    {# --- LOOP DJANGO MESSAGES (RENDER DATA TERSEMBUNYI) --- #}
+    {% if messages %}
+    <div id="django-messages" class="hidden"> 
+        {% for message in messages %}
+        <div class="django-message" data-message="{{ message }}" data-tags="{{ message.tags }}"></div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {# ---------------------------------------------------- #}
+
+    {# --- NAVBAR --- #}
     <nav class="bg-gray-800 shadow-lg sticky top-0 z-50">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -60,8 +76,7 @@
             </a>
             
             <div class="hidden md:flex space-x-4">
-              <a href="{% url 'news:article-list' %}" 
-                 class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+              <a href="{% url 'news:article-list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 News
               </a>
               <a href="{% url 'event:home_event' %}" 
@@ -76,14 +91,10 @@
           
           <div class="flex items-center space-x-3">
             {% if user.is_authenticated %}
-              
-              <a href="{% url 'news:article-create' %}" 
-                 class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+              <a href="{% url 'news:article-create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Buat Artikel
               </a>
-
-              <a href="{% url 'event:create_event' %}" 
-                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+              {% comment %} <a href="{% url 'event:create_event' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Buat Acara
                         </a>
                 <a href="{% url 'ticketing:create_ticket' %}" 
@@ -93,43 +104,132 @@
 
               <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 Profile
-              </a>
+              </a> {% endcomment %}
               
-              <form action="{% url 'profile_user:logout' %}" method="post" class="d-inline">
+              <form action="{% url 'profile_user:logout' %}" method="post" class="inline">
                 {% csrf_token %}
-                <button type="submit" 
-                        class="bg-gray-700 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+                <button type="submit" class="bg-gray-700 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                   Logout
                 </button>
               </form>
-
             {% else %}
-              
               <a href="{% url 'profile_user:register' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                 Register
               </a>
-              
-              <a href="{% url 'profile_user:login' %}" 
-                 class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
+              <a href="{% url 'profile_user:login' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-150">
                 Login
               </a>
             {% endif %}
-            
-            </div>
+          </div>
         </div>
       </div>
     </nav>
 
+    {# --- KONTEN UTAMA --- #}
     <main class="container mx-auto mt-6 px-4 sm:px-6 lg:px-8 flex-grow">
       {% block content %}
       {% endblock %}
     </main>
 
+    {# --- FOOTER --- #}
     <footer class="bg-gray-800 shadow-inner mt-12">
       <div class="container mx-auto px-6 py-4 text-center text-gray-500">
         &copy; {% now "Y" %} SPORRA. All rights reserved.
       </div>
     </footer>
+
+    {# --- JAVASCRIPT UNTUK MENAMPILKAN TOAST --- #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toastContainer = document.getElementById('toast-container');
+            const messageContainer = document.getElementById('django-messages');
+
+            if (!messageContainer) return; 
+
+            const messages = messageContainer.querySelectorAll('.django-message');
+
+            messages.forEach(messageElement => {
+                const message = messageElement.dataset.message;
+                const tags = messageElement.dataset.tags; 
+
+                const toastElement = document.createElement('div');
+                // Base style + initial transition class. Ditambah flex & items-start
+                toastElement.className = `p-4 rounded-lg shadow-lg flex items-start space-x-3 text-sm font-medium toast-enter w-full`; 
+
+                // --- Define Icons ---
+                const icons = {
+                    info: `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`,
+                    success: `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`,
+                    error: `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`,
+                    warning: `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /> </svg>`,
+                    close: `<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> </svg>`
+                };
+                // ---------------------
+
+                // --- Tentukan Warna & Ikon berdasarkan tags ---
+                let bgColor = 'bg-gray-700'; 
+                let textColor = 'text-gray-100';
+                let iconSvg = icons.info;
+
+                if (tags.includes('success')) {
+                    bgColor = 'bg-green-600'; textColor = 'text-white'; iconSvg = icons.success;
+                } else if (tags.includes('error')) {
+                    bgColor = 'bg-red-600'; textColor = 'text-white'; iconSvg = icons.error;
+                } else if (tags.includes('warning')) {
+                    bgColor = 'bg-yellow-500'; textColor = 'text-gray-900'; iconSvg = icons.warning;
+                } else if (tags.includes('info')) {
+                    bgColor = 'bg-blue-600'; textColor = 'text-white'; iconSvg = icons.info;
+                }
+                // ------------------------------------------
+
+                toastElement.classList.add(bgColor, textColor);
+
+                // --- Struktur HTML Toast (Lebih Rapi) ---
+                toastElement.innerHTML = `
+                    <div class="flex-shrink-0">
+                        ${iconSvg} 
+                    </div>
+                    <div class="flex-grow mr-2">
+                        ${message} 
+                    </div>
+                    <div class="flex-shrink-0">
+                        <button type="button" class="inline-flex rounded-md p-1 -m-1 focus:outline-none focus:ring-2 focus:ring-white opacity-70 hover:opacity-100 close-toast">
+                            <span class="sr-only">Dismiss</span>
+                            ${icons.close}
+                        </button>
+                    </div>
+                `;
+                // -------------------------------------
+
+                const closeButton = toastElement.querySelector('.close-toast');
+                closeButton.addEventListener('click', () => removeToast(toastElement));
+
+                toastContainer.appendChild(toastElement);
+
+                // Trigger transisi masuk
+                requestAnimationFrame(() => {
+                    toastElement.classList.remove('toast-enter');
+                    toastElement.classList.add('toast-enter-active');
+                });
+
+                // Atur timeout hapus otomatis
+                const autoCloseTimeout = setTimeout(() => removeToast(toastElement), 5000); 
+
+                // Fungsi hapus toast
+                function removeToast(element) {
+                    clearTimeout(autoCloseTimeout); 
+                    element.classList.remove('toast-enter-active');
+                    element.classList.add('toast-exit-active');
+                    element.addEventListener('transitionend', () => {
+                        if (element.parentNode) element.parentNode.removeChild(element);
+                    }, { once: true }); 
+                }
+            });
+            
+            // Hapus container data Django setelah diproses
+            messageContainer.remove(); 
+        });
+    </script>
 
   </body>
 </html>
