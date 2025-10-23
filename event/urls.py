@@ -9,5 +9,7 @@ urlpatterns = [
     path('create-event/', create_event, name='create_event'),
     path('event/<str:id>/edit/', edit_event, name='edit_event'),
     path('event/<str:id>/delete/', delete_event, name='delete_event'),
+    
+    # AJAX endpoint
     path('ajax/get-events/', get_events_ajax, name='get_events_ajax'),
 ]

@@ -8,24 +8,20 @@ from django.views.generic import (
     DeleteView,
     TemplateView,
 )
-# For security: only logged-in users can create/edit/delete
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Article
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
+from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 
 
 # --- View Landing page ---
 class LandingPageView(TemplateView):
-    """
-    View untuk menampilkan landing page utama di root '/'.
-    """
     template_name = 'landing.html'
     
-    # --- LOGIKA UNTUK 'hottest_articles' HARUSNYA ADA DI SINI ---
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Mengambil 3 artikel TERBARU (lebih baik untuk situs baru)
         context['hottest_articles'] = Article.objects.order_by('-created_at')[:3]
         return context
 
@@ -36,11 +32,10 @@ class ArticleListView(ListView):
     model = Article
     template_name = 'news/article_list.html' 
     context_object_name = 'articles'
-    # --- UBAH INI JADI 9 ---
     paginate_by = 9 
 
     def get_queryset(self):
-        queryset = super().get_queryset().order_by('-created_at') # Selalu urutkan terbaru
+        queryset = super().get_queryset().order_by('-created_at')
         category = self.request.GET.get('category')
         if category:
             queryset = queryset.filter(category=category)
@@ -75,78 +70,82 @@ class ArticleListView(ListView):
                 context,
                 request=request
             )
-            # Kirim HTML sebagai JSON response
             return JsonResponse({'html': html})
         else:
-            # Jika BUKAN AJAX, lanjutkan seperti biasa (render halaman penuh)
             return super().get(request, *args, **kwargs)
 
 
 class ArticleDetailView(DetailView):
-    """
-    Shows a single article.
-    This view also increments the 'news_views' count.
-    """
     model = Article
-    template_name = 'news/article_detail.html' # You need to create this template
+    template_name = 'news/article_detail.html'
     context_object_name = 'article'
 
     def get_object(self, queryset=None):
-        # Get the article object
         article = super().get_object(queryset)
-        
-        # Call the model's method to increment its view count
-        # This happens every time the detail page is loaded
         article.increment_views()
         
         return article
 
 # --- CREATE View ---
 
-class ArticleCreateView(LoginRequiredMixin, CreateView):
-    """
-    A form for creating a new article.
-    Only logged-in users can access this.
-    """
+class ArticleCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Article
-    template_name = 'news/article_form.html' # You need to create this
-    fields = ['title', 'content', 'thumbnail', 'category'] # Fields user can fill
+    template_name = 'news/article_form.html'
+    fields = ['title', 'content', 'thumbnail', 'category']
+    success_message = "Artikel '%(title)s' berhasil dibuat!"
     
     def form_valid(self, form):
-        # Automatically set the author to the currently logged-in user
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+    
+        # Increment news_created counter di UserProfile
+        user_profile = self.request.user.userprofile
+        user_profile.increment_news()
+
+        return response
 
 
 # --- UPDATE View ---
 
-class ArticleUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """
-    A form for updating an existing article.
-    Only the *original author* can update it.
-    """
+class ArticleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Article
-    template_name = 'news/article_form.html' # Can reuse the create form
+    template_name = 'news/article_form.html'
     fields = ['title', 'content', 'thumbnail', 'category']
+    success_message = "Artikel '%(title)s' berhasil diperbarui!"
+
+    def form_valid(self, form):
+        if form.has_changed():
+            self.object = form.save()
+            messages.success(self.request, f"Artikel '{self.object.title}' berhasil diperbarui!")
+
+            return HttpResponseRedirect(self.get_success_url()) 
+        else:
+            messages.info(self.request, "Tidak ada perubahan yang disimpan.")
+            return HttpResponseRedirect(self.get_success_url())
 
     def test_func(self):
-        # This test ensures only the author can edit
         article = self.get_object()
-        return self.request.user == article.author
+        return self.request.user == article.author or self.request.user.is_superuser
 
 
 # --- DELETE View ---
 
-class ArticleDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    """
-    A confirmation page for deleting an article.
-    Only the *original author* can delete it.
-    """
+class ArticleDeleteView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
-    template_name = 'news/article_confirm_delete.html' # You need to create this
-    success_url = reverse_lazy('news:article-list') # Redirect to list after delete
+    template_name = 'news/article_confirm_delete.html'
+    success_url = reverse_lazy('news:article-list')
+
+    def post(self, request, *args, **kwargs):
+
+        self.object = self.get_object()
+        title_to_delete = self.object.title 
+
+        response = super().post(request, *args, **kwargs) 
+        
+        messages.error(self.request, f"Artikel '{title_to_delete}' berhasil dihapus!") 
+        
+        return response
 
     def test_func(self):
-        # This test ensures only the author can delete
         article = self.get_object()
-        return self.request.user == article.author
+        return self.request.user == article.author or self.request.user.is_superuser

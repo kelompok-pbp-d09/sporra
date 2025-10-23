@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Article # Impor model kamu
+from .models import Article
 
 # Dekorator @admin.register secara otomatis mendaftarkan Article
 # dan mengaitkannya dengan class kustomisasi ArticleAdmin
@@ -29,6 +29,6 @@ class ArticleAdmin(admin.ModelAdmin):
         }),
         ('Info Otomatis (Read-Only)', {
             'fields': ('id', 'created_at', 'news_views'),
-            'classes': ('collapse',) # Sembunyikan grup ini by default
+            'classes': ('collapse',)
         }),
     )

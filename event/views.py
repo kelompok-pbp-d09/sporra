@@ -11,6 +11,8 @@ from django.views.decorators.http import require_POST
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.template.defaultfilters import date as date_filter
+from ticketing.models import Ticket
+
 
 # Create your views here.
 def home_event(request):
@@ -36,6 +38,8 @@ def event_detail(request, id):
     event = get_object_or_404(Event, pk=id)
     event.increment_views()
     event_time = event.date
+    
+    tickets = Ticket.objects.filter(event=event)
     if timezone.is_naive(event_time):
         print("[LANGKAH 2] Waktu terdeteksi 'NAIVE', diubah menjadi UTC.")
         event_time = timezone.make_aware(event_time, timezone.utc)
@@ -46,6 +50,7 @@ def event_detail(request, id):
     context = {
         'event': event,
         'has_ended': has_ended,
+        'tickets': tickets,
     }
     return render(request, 'event_detail.html', context)
 
@@ -109,7 +114,6 @@ def get_events_ajax(request):
             'id': str(event.id),
             'judul': event.judul,
             'lokasi': event.lokasi,
-            'harga': str(event.harga),
             'kategori_display': event.get_kategori_display(),
             'date_formatted': date_filter(local_date, "d M Y, H:i"),
             'detail_url': reverse('event:event_detail', args=[event.id]),
