@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load tz %}
+{% load static %}
+
+{% block meta %}
+<title>Event Home</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="mt-10 flex flex-wrap gap-4 md:gap-6">
+  <a href="{% url 'event:create_event' %}" 
+     class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg text-lg 
+            transition duration-200 ease-in-out transform hover:scale-105">
+    Tambah Event Baru
+  </a>
+</div>
+
+<hr class="my-8 border-gray-500">
+
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-3xl font-bold text-white">Daftar Event</h1>
+  <button id="refresh-button" title="Refresh data"
+      class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
+    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+  </button>
+</div>
+
+<div class="flex flex-wrap gap-2 mb-6" id="category-filters">
+  <a href="#" data-category="" 
+     class="category-filter py-1 px-4 rounded-full text-sm font-medium transition bg-blue-600 text-white">
+    Semua
+  </a>
+  
+  {% for value, display_name in categories %}
+    <a href="#" data-category="{{ value }}" 
+       class="category-filter py-1 px-4 rounded-full text-sm font-medium transition bg-gray-700 text-gray-300 hover:bg-gray-600">
+      {{ display_name }}
+    </a>
+  {% endfor %}
+</div>
+
+<div id="events-container">
+  <!-- Events will be loaded here via AJAX -->
+  <div class="text-center py-12">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+    <p class="text-gray-400 mt-4">Memuat event...</p>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-96 text-white border border-gray-700">
+    <div class="flex items-center justify-center mb-4">
+      <div class="bg-red-600/20 rounded-full p-3">
+        <svg class="h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+    </div>
+    
+    <h3 class="text-xl font-semibold text-center mb-2">Hapus Event?</h3>
+    <p class="text-gray-400 text-center mb-6" id="deleteModalMessage">Event ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
+    
+    <div class="flex justify-center space-x-4">
+      <button id="cancelDelete" class="px-6 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600 transition font-medium">
+        Batal
+      </button>
+      <button id="confirmDelete" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-medium">
+        Hapus Event
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let currentCategory = '';
+  let eventToDelete = null;
+  const CURRENT_USER_ID = "{{ user.id|default_if_none:'' }}";
+
+  // Load events on page load
+  loadEvents(currentCategory);
+
+  // Category filter click handlers
+  document.querySelectorAll('.category-filter').forEach(filter => {
+    filter.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentCategory = this.dataset.category;
+      
+      // Update active state
+      document.querySelectorAll('.category-filter').forEach(f => {
+        f.classList.remove('bg-blue-600', 'text-white');
+        f.classList.add('bg-gray-700', 'text-gray-300');
+      });
+      this.classList.remove('bg-gray-700', 'text-gray-300');
+      this.classList.add('bg-blue-600', 'text-white');
+      
+      // Load filtered events
+      loadEvents(currentCategory);
+    });
+  });
+
+  // Refresh button
+  document.getElementById('refresh-button').addEventListener('click', function() {
+    console.log('Refresh button clicked!');
+    loadEvents(currentCategory);
+  });
+
+  // Delete modal handlers
+  document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+  document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
+  
+  // Close modal when clicking outside
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      hideDeleteModal();
+    }
+  });
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('deleteModal');
+      if (!modal.classList.contains('hidden')) {
+        hideDeleteModal();
+      }
+    }
+  });
+
+  function loadEvents(category) {
+    const container = document.getElementById('events-container');
+    
+    // Show loading state
+    container.innerHTML = `
+      <div class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <p class="text-gray-400 mt-4">Memuat event...</p>
+      </div>
+    `;
+
+    // Build URL with category parameter
+    let url = '{% url "event:get_events_ajax" %}';
+    if (category) {
+      url += `?category=${category}`;
+    }
+
+    // Fetch events
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        displayEvents(data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <p class="text-red-400">Terjadi kesalahan saat memuat event.</p>
+          </div>
+        `;
+      });
+  }
+
+  function displayEvents(data) {
+    const container = document.getElementById('events-container');
+    let html = '';
+
+    // Upcoming events section
+    if (data.upcoming_events && data.upcoming_events.length > 0) {
+      html += '<h2 class="text-2xl font-semibold text-white mb-4">Event yang Akan Datang</h2>';
+      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">';
+      
+      data.upcoming_events.forEach(event => {
+        html += createEventCard(event, false);
+      });
+      
+      html += '</div>';
+    } else {
+      html += `
+        <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12">
+          <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada artikel" class="mx-auto mb-4 w-48 h-48 object-contain">
+          <p class="text-gray-400 text-lg">Tidak ada event yang akan datang.</p>
+        </div>
+      `;
+    }
+
+    html += '<hr class="my-8 border-gray-700">';
+
+    // Past events section
+    if (data.past_events && data.past_events.length > 0) {
+      html += '<h2 class="text-2xl font-semibold text-gray-300 mb-4">Event yang Sudah Selesai</h2>';
+      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">';
+      
+      data.past_events.forEach(event => {
+        html += createEventCard(event, true);
+      });
+      
+      html += '</div>';
+    } else {
+      html += '<p class="text-gray-400">Belum ada event yang selesai.</p>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function createEventCard(event, isPast) {
+    const bgClass = isPast ? 'bg-gray-700 opacity-80' : 'bg-gray-800 hover:scale-105 hover:bg-gray-750';
+    const titleClass = isPast ? 'text-gray-200' : 'text-white';
+    const borderClass = isPast ? 'border-gray-500' : 'border-gray-700';
+    const dateClass = isPast ? 'text-red-400' : 'text-gray-300';
+    const dateIcon = isPast ? '❌ Selesai — ' : '🕒 ';
+    
+    // Show delete button only if user owns the event
+    const deleteButton = CURRENT_USER_ID && Number(CURRENT_USER_ID) === Number(event.user_id)
+      ? `<button onclick="showDeleteModal('${event.id}', '${escapeHtml(event.judul).replace(/'/g, "\\'")}')" 
+                 class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-all duration-200 shadow-lg z-10"
+                 title="Hapus Event">
+           <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+           </svg>
+         </button>`
+      : '';
+    
+    return `
+      <div class="${bgClass} p-5 rounded-xl shadow-md transition transform relative">
+        ${deleteButton}
+        <h2 class="text-xl font-semibold ${titleClass} mb-2">${escapeHtml(event.judul)}</h2>
+        <hr class="my-2 ${borderClass}">
+        <p class="text-gray-400 text-sm mb-1 bold">${escapeHtml(event.kategori_display)}</p>
+        <p class="text-gray-400 text-sm mb-1">📍 ${escapeHtml(event.lokasi)}</p>
+        <p class="${dateClass} text-sm mb-3">${dateIcon}${escapeHtml(event.date_formatted)}</p>
+        <a href="${event.detail_url}">
+          <button class="w-full bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
+            Selangkapnya
+          </button>
+        </a>
+      </div>
+    `;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function showDeleteModal(eventId, eventTitle) {
+    eventToDelete = eventId;
+    const messageElement = document.getElementById('deleteModalMessage');
+    messageElement.innerHTML = `Event "<span class="font-semibold text-white">${escapeHtml(eventTitle)}</span>" akan dihapus secara permanen dan tidak dapat dikembalikan.`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
+
+  function hideDeleteModal() {
+    eventToDelete = null;
+    document.getElementById('deleteModal').classList.add('hidden');
+  }
+
+  async function confirmDelete() {
+    if (!eventToDelete) return;
+    
+    try {
+      const deleteUrl = `{% url 'event:delete_event' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', eventToDelete);
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      });
+      
+      if (response.ok) {
+        hideDeleteModal();
+        loadEvents(currentCategory);
+        // Optional: Show success message
+        console.log('Event berhasil dihapus!');
+      } else {
+        console.error('Gagal menghapus event');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  // Expose functions to global scope for onclick handlers
+  window.showDeleteModal = showDeleteModal;
+  window.escapeHtml = escapeHtml;
+});
+</script>
+{% endblock content %}

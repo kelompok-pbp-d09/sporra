@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+<title>Register</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10 bg-gray-800 p-8 rounded-lg shadow-xl">
+  
+  <h1 class="text-3xl font-bold text-white mb-6 text-center">Create Account</h1>
+
+  <form method="POST" action="" class="register-form">
+    {% csrf_token %}
+    
+    {{ form.as_p }}
+    
+    <button type="submit" 
+            class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg
+                   transition duration-200 ease-in-out transform hover:scale-105">
+      Register
+    </button>
+    
+  </form>
+  
+  <p class="text-center text-gray-400 mt-6">
+    Already have an account? 
+    <a href="{% url 'profile_user:login' %}" class="font-medium text-blue-400 hover:text-blue-300">
+      Login Now
+    </a>
+  </p>
+</div>
+
+
+<style>
+  .register-form p {
+    margin-bottom: 1rem;
+  }
+  
+  .register-form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #D1D5DB;
+  }
+  
+
+  .register-form input[type='text'],
+  .register-form input[type='password'] {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: #F9FAFB;
+    border: 1px solid #D1D5DB;
+    color: #111827;
+  }
+  
+
+  .register-form .helptext {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    margin-top: 0.5rem;
+  }
+  
+  
+  .register-form .errorlist {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #F87171;
+  }
+</style>
+
+{% endblock content %}

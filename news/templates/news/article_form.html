@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="bg-gray-800 rounded-lg shadow-lg p-6 md:p-8">
+
+    <h2 class="text-2xl font-bold text-white mb-6">
+      {% if object %}
+        Edit Artikel
+      {% else %}
+        Buat Artikel Baru
+      {% endif %}
+    </h2>
+    
+    <form method="POST">
+      {% csrf_token %}
+      
+      <div class="space-y-4">
+        <div>
+          <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+            Judul
+          </label>
+          {{ form.title }}
+        </div>
+        
+        <div>
+          <label for="{{ form.thumbnail.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+            Thumbnail (URL)
+          </label>
+          {{ form.thumbnail }}
+        </div>
+        
+        <div>
+          <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+            Kategori
+          </label>
+          {{ form.category }}
+        </div>
+        
+        <div>
+          <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+            Konten
+          </label>
+          {{ form.content }}
+        </div>
+
+      </div>
+
+      <style>
+        input[type='text'], input[type='url'], select, textarea {
+          display: block;
+          width: 100%;
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          line-height: 1.5;
+          color: #E5E7EB; /* text-gray-200 */
+          background-color: #374151; /* bg-gray-700 */
+          background-clip: padding-box;
+          border: 1px solid #4B5563; /* border-gray-600 */
+          border-radius: 0.5rem; /* rounded-lg */
+          transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        input[type='text']:focus, input[type='url']:focus, select:focus, textarea:focus {
+          outline: 2px solid transparent;
+          outline-offset: 2px;
+          border-color: #3B82F6; /* focus:border-blue-500 */
+          box-shadow: 0 0 0 2px #3B82F6; /* focus:ring-blue-500 */
+          background-color: #4B5563; /* bg-gray-600 */
+        }
+        textarea {
+          min-height: 250px;
+        }
+      </style>
+
+      <div class="flex space-x-3 mt-6">
+        <button type="submit" 
+                class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-5 rounded-lg transition duration-150">
+          Simpan Artikel
+        </button>
+        <a href="{{ object.get_absolute_url|default:'/' }}" 
+           class="bg-gray-600 hover:bg-gray-500 text-gray-200 font-medium py-2 px-5 rounded-lg transition duration-150">
+          Batal
+        </a>
+      </div>
+      
+    </form>
+  </div>
+</div>
+{% endblock %}
