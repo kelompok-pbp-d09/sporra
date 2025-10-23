@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Tickets - {{ event.judul }}{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">{{ event.judul }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% for ticket in tickets %}
+  <div class="bg-gray-800 p-4 rounded-lg shadow">
+    <h2 class="text-xl font-semibold">{{ ticket.ticket_type }}</h2>
+    <p class="mt-2">Harga: Rp {{ ticket.price }}</p>
+    <p>Sisa Tiket: {{ ticket.available }}</p>
+    <button data-ticket-id="{{ ticket.id }}" class="book-btn mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+      Pesan Tiket
+    </button>
+  </div>
+  {% empty %}
+  <p>Tidak ada tiket tersedia untuk event ini.</p>
+  {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll('.book-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const ticketId = btn.dataset.ticketId;
+    const quantity = 1; // default 1 tiket
+    const csrfToken = '{{ csrf_token }}';
+
+    const formData = new FormData();
+    formData.append('quantity', quantity);
+
+    const response = await fetch("{% url 'ticketing:book_ticket' 0 %}".replace('/0/', '/' + ticketId + '/'), {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+    if(data.success){
+      alert('Tiket berhasil dipesan!');
+      location.reload(); // reload supaya sisa tiket update
+    } else {
+      alert(data.error);
+    }
+  });
+});
+</script>
+{% endblock %}

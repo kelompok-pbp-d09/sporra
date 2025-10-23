@@ -3,7 +3,7 @@ from .models import Event, Ticket, Booking
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('name', 'date')
+    list_display = ('judul', 'date')
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):

@@ -1,12 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-# Hanya buat testing
-class Event(models.Model):
-    name = models.CharField(max_length=100)
-    date = models.DateField()
-    def __str__(self):
-        return self.name
+from event.models import Event
 
 class Ticket(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tickets")

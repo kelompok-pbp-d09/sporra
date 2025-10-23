@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Booking Saya</h1>
+
+<div class="space-y-4">
+  {% for booking in bookings %}
+  <div class="bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
+    <div>
+      <p class="font-semibold">{{ booking.ticket.event.judul }}</p>
+      <p>Tiket: {{ booking.ticket.ticket_type }} | Jumlah: {{ booking.quantity }}</p>
+      <p>Booked at: {{ booking.booked_at|date:"d M Y H:i" }}</p>
+    </div>
+  </div>
+  {% empty %}
+  <p>Belum ada booking.</p>
+  {% endfor %}
+</div>
+{% endblock %}

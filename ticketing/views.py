@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Ticket, Booking ,Event
-from .forms import BookingForm
+from .models import Ticket, Booking 
+from .forms import BookingForm, TicketForm
+from event.models import Event
 
 @login_required
 def list_tickets(request, event_id):
@@ -40,3 +41,17 @@ def book_ticket(request, ticket_id):
 def my_bookings(request):
     bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
     return render(request, "my_bookings.html", {"bookings": bookings})
+
+def all_tickets(request):
+    tickets = Ticket.objects.select_related('event').all()
+    return render(request, "all_tickets.html", {"tickets": tickets})
+
+def create_ticket(request):
+    if request.method == "POST":
+        form = TicketForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('ticketing:all_tickets')  
+    else:
+        form = TicketForm()
+    return render(request, "create_ticket.html", {"form": form})

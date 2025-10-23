@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from news.views import LandingPageViewfrom django.views.generic import RedirectView
+from news.views import LandingPageView
+from django.views.generic import RedirectView
 
 
 urlpatterns = [ 
@@ -13,6 +14,7 @@ urlpatterns = [
     path('news/', include('news.urls')),
     path('profile_user/', include('profile_user.urls')),
     path('event/', include('event.urls')),
+    path('ticketing/',include('ticketing.urls')),
     
 
     

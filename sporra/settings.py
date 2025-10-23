@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'news',
     'profile_user',
     'event',
+    'ticketing',
 ]
 
 MIDDLEWARE = [

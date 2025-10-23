@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-white-800">Semua Tiket</h1>
+
+    {% if tickets %}
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {% for ticket in tickets %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition duration-300">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold text-gray-800">{{ ticket.name }}</h2>
+                    <p class="text-gray-600 mt-1">Event: {{ ticket.event.name }}</p>
+                    <p class="text-gray-600 mt-2">{{ ticket.description|default:"-" }}</p>
+                    <p class="mt-4 text-gray-800 font-medium">Harga: Rp {{ ticket.price}}</p>
+                    <p class="mt-1 text-gray-500">Tersedia: {{ ticket.available }}</p>
+                    
+                    {% if ticket.available > 0 %}
+                    <a href="{% url 'ticketing:book_ticket' ticket.id %}" 
+                       class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                        Pesan Tiket
+                    </a>
+                    {% else %}
+                    <span class="mt-4 inline-block bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg">
+                        Sold Out
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-600">Belum ada tiket yang tersedia.</p>
+    {% endif %}
+</div>
+{% endblock %}
