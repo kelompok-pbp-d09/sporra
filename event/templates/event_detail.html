@@ -35,13 +35,14 @@
   {% if has_ended %}
     <p class="mt-4 text-red-400 font-semibold text-center">Acara ini telah selesai. Terima kasih atas ketertarikannya!</p>
 {% else %}
-        <div class="flex justify-center mt-6">
-        <a href="{% url 'ticketing:book_ticket' event.id %}">
-           <button class="bg-blue-600 hover:bg-blue-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
-  Daftar 
- </button>
+  <div class="flex justify-center mt-8">
+    <a href="{% url 'ticketing:book_ticket' event.id %}">
+      <button class="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-300">
+        <span class="relative z-10">🎟️ Join Sekarang!</span>
+        <div class="absolute inset-0 bg-blue-400/20 blur-lg opacity-0 group-hover:opacity-100 transition duration-500"></div>
+      </button>
     </a>
-         </div>
+  </div>
 {% endif %}
 
   <p class="mt-4">
@@ -53,7 +54,7 @@
     {% endif %}
   </p>
 
-  {% if request.user == event.user %}
+  {% if request.user == event.user or request.user.is_superuser %}
     <div class="flex gap-4 mt-6">
       <!-- Edit Button -->
       <a href="{% url 'event:edit_event' event.id %}">

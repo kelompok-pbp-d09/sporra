@@ -1,21 +1,53 @@
-{% extends "base.html" %}
-
-{% block title %}My Bookings{% endblock %}
-
+{% extends 'base.html' %}
+{% load tz %}
+{% load static %}
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">Booking Saya</h1>
+<div class="container mx-auto py-10 text-white">
 
-<div class="space-y-4">
-  {% for booking in bookings %}
-  <div class="bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
-    <div>
-      <p class="font-semibold">{{ booking.ticket.event.judul }}</p>
-      <p>Tiket: {{ booking.ticket.ticket_type }} | Jumlah: {{ booking.quantity }}</p>
-      <p>Booked at: {{ booking.booked_at|date:"d M Y H:i" }}</p>
+  <h1 class="text-3xl font-bold mb-8 text-center">🎟️ My Bookings</h1>
+
+  {% if bookings %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {% for booking in bookings %}
+        <div class="bg-gray-800 hover:bg-gray-750 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-start mb-3">
+            <h2 class="text-xl font-semibold text-white">{{ booking.ticket.event.judul }}</h2>
+            <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+              Joined
+            </span>
+          </div>
+
+          <hr class="border-gray-700 my-3">
+
+          <!-- Event Info -->
+          <p class="text-gray-400 text-sm mb-1">📅 {{ booking.ticket.event.date|date:"d M Y" }}</p>
+          <p class="text-gray-400 text-sm mb-1">📍 {{ booking.ticket.event.lokasi|default:"Lokasi belum ditentukan" }}</p>
+
+          <!-- Booking Detail -->
+          <div class="mt-4 bg-gray-700/40 rounded-lg p-3">
+            <p class="text-sm"><span class="font-medium text-blue-400">Quantity:</span> {{ booking.quantity }}</p>
+            <p class="text-sm"><span class="font-medium text-blue-400">Total Harga:</span> Rp{{ booking.total_price|floatformat:0 }}</p>
+            <p class="text-sm text-gray-400">📆 Dipesan: {{ booking.booked_at|date:"d M Y, H:i" }}</p>
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-5 flex justify-between items-center">
+            <a href="{% url 'event:event_detail' booking.ticket.event.id %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition duration-200">
+              Lihat Event
+            </a>
+          </div>
+
+        </div>
+      {% endfor %}
     </div>
-  </div>
-  {% empty %}
-  <p>Belum ada booking.</p>
-  {% endfor %}
+  {% else %}
+    <div class="text-center py-20">
+      <img src="{% static 'images/no-article-found.png' %}" alt="Tidak ada booking" class="mx-auto mb-6 w-40 h-40 opacity-70">
+      <p class="text-gray-400 text-lg">Kamu belum pernah booking event apapun 😢</p>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
