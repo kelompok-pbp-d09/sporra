@@ -19,27 +19,47 @@
     <!-- Daftar komentar -->
     <div id="comment-list" class="space-y-4 mb-10">
         {% for comment in comments %}
-        <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-{{ comment.id }}">
-            <div class="flex justify-between items-start">
-                <div class="flex items-center space-x-4">
-                    <div class="flex flex-col items-center">
-                        <button class="vote-btn text-gray-400 hover:text-blue-400" data-id="{{ comment.id }}" data-vote="up">▲</button>
-                        <p id="score-{{ comment.id }}" class="text-sm font-bold text-white">{{ comment.score }}</p>
-                        <button class="vote-btn text-gray-400 hover:text-red-400" data-id="{{ comment.id }}" data-vote="down">▼</button>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
-                        <p class="text-gray-200 whitespace-pre-line">{{ comment.content }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
-                    </div>
-                </div>
+        <div class="p-4 bg-gray-800 rounded-lg shadow relative" id="comment-{{ comment.id }}">
+            {% if user.is_authenticated %}
+            {% if comment.author == user or user.userprofile and user.userprofile.is_admin %}
+            <div class="absolute top-3 right-3 flex gap-2">
+                <button class="edit-btn inline-flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 rounded-lg transition duration-150 text-xs"
+                        data-comment-id="{{ comment.id }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit
+                </button>
+                <button class="delete-btn inline-flex items-center bg-red-600 hover:bg-red-700 text-white font-medium py-1.5 px-3 rounded-lg transition duration-150 text-xs"
+                        data-comment-id="{{ comment.id }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Hapus
+                </button>
+            </div>
+            {% endif %}
+            {% endif %}
 
-                {% if user.is_authenticated %}
-                {% if comment.author == user or user.userprofile and user.userprofile.is_admin %}
-                    <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition"
-                            data-comment-id="{{ comment.id }}">Hapus</button>
-                {% endif %}
-                {% endif %}
+            <!-- isi komentar -->
+            <div class="flex items-start space-x-4">
+                <div class="flex flex-col items-center">
+                    <button 
+                        class="vote-btn {% if comment.user_vote == 1 %}text-blue-400{% else %}text-gray-400 hover:text-blue-400{% endif %}"
+                        data-id="{{ comment.id }}" data-vote="up">▲</button>
+
+                    <p id="score-{{ comment.id }}" class="text-center text-white">{{ comment.score }}</p>
+
+                    <button 
+                        class="vote-btn {% if comment.user_vote == -1 %}text-red-400{% else %}text-gray-400 hover:text-red-400{% endif %}"
+                        data-id="{{ comment.id }}" data-vote="down">▼</button>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
+                    <p id="comment-content-{{ comment.id }}" 
+                       class="text-gray-200 whitespace-pre-line mt-1 break-words">{{ comment.content }}</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
+                </div>
             </div>
         </div>
         {% empty %}
@@ -67,7 +87,7 @@
         <form id="commentForm">
             {% csrf_token %}
             <textarea id="commentContent" name="content" rows="4"
-                class="w-full p-3 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                class="w-full p-3 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden min-h-[100px]"
                 placeholder="Tulis komentar kamu di sini..."></textarea>
             <div class="flex justify-end space-x-2">
                 <button type="button" id="closeModal" class="bg-gray-600 hover:bg-gray-700 px-4 py-1 rounded text-white transition">Batal</button>
@@ -75,6 +95,23 @@
             </div>
         </form>
     </div>
+</div>
+
+<!-- Modal Edit Komentar -->
+<div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+    <h2 class="text-2xl font-bold mb-4">Edit Komentar</h2>
+    <form id="editCommentForm">
+      {% csrf_token %}
+      <textarea id="editCommentContent" rows="4"
+        class="w-full bg-gray-800 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none overflow-hidden min-h-[100px]"
+        required></textarea>
+      <div class="mt-4 flex justify-end space-x-3">
+        <button type="button" id="cancelEdit" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-150">Batal</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition duration-150">Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -85,7 +122,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    let commentToDelete = null;
+    let editingCommentId = null;
 
     function showToast(message, color="bg-green-600") {
         const t=$("#toast");
@@ -95,11 +132,101 @@ $(document).ready(function() {
         setTimeout(()=>t.addClass("hidden"),3000);
     }
 
-    // buka/tutup modal
+    // === Modal tambah komentar ===
     $("#openModal").click(()=>$("#commentModal").removeClass("hidden"));
     $("#closeModal").click(()=>$("#commentModal").addClass("hidden"));
 
-    // tambah komentar
+    // === Modal edit komentar ===
+    function openEditModal(id, content) {
+        editingCommentId = id;
+        $("#editCommentContent").val(content).trigger('input'); // trigger input biar auto-resize
+        $("#editModal").removeClass("hidden");
+    }
+
+    $("#cancelEdit").click(()=>{ $("#editModal").addClass("hidden"); editingCommentId=null; });
+
+    // === Auto-resize textarea ===
+    $(document).on("input", "#editCommentContent, #commentContent", function() {
+      this.style.height = "auto";
+      this.style.height = (this.scrollHeight) + "px";
+    });
+
+    // === Submit edit komentar ===
+    $("#editCommentForm").submit(function(e){
+        e.preventDefault();
+        const newContent=$("#editCommentContent").val().trim();
+        if(!newContent) return;
+
+        $.ajax({
+            type:"POST",
+            url:`/forum/edit_comment/${editingCommentId}/`,
+            data:{
+                content:newContent,
+                csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()
+            },
+            success:function(r){
+                if(r.success){
+                    $(`#comment-content-${editingCommentId}`).text(newContent);
+                    $("#editModal").addClass("hidden");
+                    showToast("Komentar berhasil diperbarui!");
+                } else showToast(r.error||"Gagal menyimpan perubahan","bg-red-600");
+            },
+            error:(xhr)=>{
+                let message="Gagal mengedit komentar";
+                if(xhr.status===403) message="Kamu tidak punya izin untuk mengedit komentar ini";
+                showToast(message,"bg-red-600");
+            }
+        });
+    });
+
+    // === Klik tombol Edit ===
+    $(document).on("click",".edit-btn", function(){
+        const id=$(this).data("comment-id");
+        const oldContent=$(`#comment-content-${id}`).text().trim();
+        openEditModal(id, oldContent);
+    });
+
+    // === Hapus komentar ===
+    $(document).on("click",".delete-btn", function(){
+        const id=$(this).data("comment-id");
+        $.ajax({
+            type:"POST",
+            url:`/forum/delete_comment/${id}/`,
+            data:{csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
+            success:function(){$(`#comment-${id}`).fadeOut(300,function(){$(this).remove();}); showToast("Komentar berhasil dihapus!"); },
+            error:(xhr)=>{let msg="Gagal menghapus komentar"; if(xhr.status===403) msg="Kamu tidak punya izin menghapus komentar ini"; showToast(msg,"bg-red-600");}
+        });
+    });
+
+    // === Voting komentar ===
+    $(document).on("click",".vote-btn", function(){
+        const id=$(this).data("id");
+        const type=$(this).data("vote");
+        $.ajax({
+            type:"POST",
+            url:`/forum/post/${id}/vote/`,
+            data:{vote:type,csrfmiddlewaretoken:$("#csrf_token").val()},
+            success:function(r){
+                $(`#score-${id}`).text(r.score);
+                const up=$(`#comment-${id} .vote-btn[data-vote='up']`);
+                const down=$(`#comment-${id} .vote-btn[data-vote='down']`);
+                up.removeClass("text-blue-400").addClass("text-gray-400 hover:text-blue-400");
+                down.removeClass("text-red-400").addClass("text-gray-400 hover:text-red-400");
+                if(r.user_vote===1) up.removeClass("text-gray-400").addClass("text-blue-400");
+                else if(r.user_vote===-1) down.removeClass("text-gray-400").addClass("text-red-400");
+
+                const sorted = $("#comment-list > .p-4").sort((a, b) => {
+                    const scoreA = parseInt($(a).find("[id^='score-']").text()) || 0;
+                    const scoreB = parseInt($(b).find("[id^='score-']").text()) || 0;
+                return scoreB - scoreA;
+                });
+                $("#comment-list").html(sorted);
+            },
+            error:()=>alert("Gagal memproses vote")
+        });
+    });
+
+    // === Tambah komentar ===
     $("#commentForm").submit(function(e){
         e.preventDefault();
         $.ajax({
@@ -110,76 +237,34 @@ $(document).ready(function() {
                 csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()
             },
             success:function(r){
-                const newComment = `
-                <div class="p-4 bg-gray-800 rounded-lg shadow" id="comment-${r.id}">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex flex-col items-center">
-                                <button class="vote-btn text-gray-400 hover:text-blue-400" data-id="${r.id}" data-vote="up">▲</button>
-                                <p id="score-${r.id}" class="text-sm font-bold text-white">0</p>
-                                <button class="vote-btn text-gray-400 hover:text-red-400" data-id="${r.id}" data-vote="down">▼</button>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-blue-300">${r.username}</p>
-                                <p class="text-gray-200 whitespace-pre-line">${r.content}</p>
-                                <p class="text-sm text-gray-500 mt-1">${r.created_at}</p>
-                            </div>
+                const newComment=`
+                <div class="p-4 bg-gray-800 rounded-lg shadow relative" id="comment-${r.id}">
+                    <div class="absolute top-3 right-3 flex gap-2">
+                        <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition" data-comment-id="${r.id}">Edit</button>
+                        <button class="delete-btn bg-red-600 hover:bg-red-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition" data-comment-id="${r.id}">Hapus</button>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="flex flex-col items-center">
+                            <button class="vote-btn text-gray-400 hover:text-blue-400" data-id="${r.id}" data-vote="up">▲</button>
+                            <p id="score-${r.id}" class="text-center text-white">0</p>
+                            <button class="vote-btn text-gray-400 hover:text-red-400" data-id="${r.id}" data-vote="down">▼</button>
                         </div>
-                        <button class="delete-btn text-red-500 hover:text-red-600 text-sm font-medium transition" data-comment-id="${r.id}">Hapus</button>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-blue-300">${r.username}</p>
+                            <p id="comment-content-${r.id}" class="text-gray-200 whitespace-pre-line mt-1 break-words">${r.content}</p>
+                            <p class="text-sm text-gray-500 mt-1">${r.created_at}</p>
+                        </div>
                     </div>
                 </div>`;
                 $("#comment-list").prepend(newComment);
                 $("#commentModal").addClass("hidden");
-                $("#commentContent").val("");
+                $("#commentContent").val("").trigger('input');
                 showToast("Komentar berhasil ditambahkan!");
             },
             error:()=>showToast("Gagal menambahkan komentar","bg-red-600")
         });
     });
 
-    // hapus komentar
-    $(document).on("click",".delete-btn",function(){
-        const id=$(this).data("comment-id");
-        $.ajax({
-            type:"POST",
-            url:`/forumdiskusi/delete_comment/${id}/`,
-            data:{csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
-            success:()=>{
-                $(`#comment-${id}`).remove();
-                showToast("Komentar berhasil dihapus!");
-            },
-            error:()=>showToast("Gagal menghapus komentar","bg-red-600")
-        });
-    });
-
-    // voting
-    $(document).on("click",".vote-btn",function(){
-        const id=$(this).data("id");
-        const type=$(this).data("vote");
-        $.ajax({
-            type:"POST",
-            url:`/forum/post/${id}/vote/`,
-            data:{
-                vote:type,
-                csrfmiddlewaretoken:$("#csrf_token").val()
-            },
-            success:function(r){
-                $(`#score-${id}`).text(r.score);
-                const up=$(`#comment-${id} .vote-btn[data-vote='up']`);
-                const down=$(`#comment-${id} .vote-btn[data-vote='down']`);
-                up.removeClass("text-blue-400"); down.removeClass("text-red-400");
-                if(r.user_vote==="up") up.addClass("text-blue-400");
-                else if(r.user_vote==="down") down.addClass("text-red-400");
-
-                // urutkan ulang TANPA .html()
-                const sorted=$("#comment-list .p-4").sort((a,b)=>{
-                    return parseInt($(b).find("[id^='score-']").text()) - parseInt($(a).find("[id^='score-']").text());
-                });
-                $("#comment-list").append(sorted);
-            },
-            error:()=>showToast("Gagal memproses vote","bg-red-600")
-        });
-    });
 });
 </script>
 {% endblock %}

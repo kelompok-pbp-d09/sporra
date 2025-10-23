@@ -22,7 +22,7 @@ class Post(models.Model):
 class Vote(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='votes')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    value = models.SmallIntegerField()  # +1 = upvote, -1 = downvote
+    value = models.SmallIntegerField(default=0)  # +1 = upvote, -1 = downvote
 
     class Meta:
         unique_together = ('post', 'user')  

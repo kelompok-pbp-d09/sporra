@@ -5,25 +5,27 @@ from django.db.models import Sum
 from .models import ForumDiskusi, Post, Vote
 from news.models import Article
 
-# Forum bisa diakses tanpa login
 def forum(request, pk):
     article = get_object_or_404(Article, pk=pk)
     forum, created = ForumDiskusi.objects.get_or_create(article=article)
     comments = forum.posts.all().order_by('-score', '-created_at')
 
-    # Ambil status vote user (biar tau udah upvote/downvote belum)
     user_votes = {}
     if request.user.is_authenticated:
         votes = Vote.objects.filter(user=request.user, post__in=comments)
-        user_votes = {v.post.id: v.value for v in votes}
+        user_votes = {v.post.id: v.value for v in votes}  # simpan nilai numerik
+
+    for comment in comments:
+        comment.user_vote = user_votes.get(comment.id, 0)  # default 0
 
     context = {
         'forum': forum,
         'news': article,
         'comments': comments,
-        'user_votes': user_votes,
     }
     return render(request, 'forum.html', context)
+
+
 
 
 @login_required
@@ -66,6 +68,27 @@ def delete_comment(request, post_id):
 
     return JsonResponse({'error': 'Tidak memiliki izin untuk menghapus'}, status=403)
 
+@login_required
+def edit_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+    is_admin = hasattr(user, 'userprofile') and user.userprofile.is_admin
+
+    if post.author != user and not is_admin:
+        return JsonResponse({'error': 'Tidak memiliki izin untuk mengedit'}, status=403)
+
+    if request.method == 'POST':
+        new_content = request.POST.get('content', '').strip()
+        if not new_content:
+            return JsonResponse({'error': 'Isi komentar tidak boleh kosong'}, status=400)
+
+        post.content = new_content
+        post.save()
+
+        return JsonResponse({'success': True, 'new_content': post.content})
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 @login_required
 def vote_post(request, post_id):
@@ -77,7 +100,6 @@ def vote_post(request, post_id):
 
     value = 1 if vote_type == 'up' else -1
 
-    # Tambahkan defaults biar gak error NULL
     vote, created = Vote.objects.get_or_create(
         post=post,
         user=request.user,
@@ -85,16 +107,13 @@ def vote_post(request, post_id):
     )
 
     if not created and vote.value == value:
-        # Klik ulang arah yang sama → hapus vote (unvote)
         vote.delete()
-        user_vote = None
+        user_vote = 0
     else:
-        # Baru atau ubah arah vote
         vote.value = value
         vote.save()
-        user_vote = vote_type
+        user_vote = value
 
-    # Hitung ulang skor
     total = post.votes.aggregate(total=Sum('value'))['total'] or 0
     post.score = total
     post.save()
@@ -103,28 +122,3 @@ def vote_post(request, post_id):
         'score': total,
         'user_vote': user_vote,
     })
-
-
-def preview(request):
-    """Preview forum tanpa data real (dummy mode)"""
-    from django.contrib.auth.models import User
-
-    article = Article(
-        id='00000000-0000-0000-0000-000000000000',
-        title='Contoh Berita untuk Preview',
-        content='Ini adalah artikel contoh untuk melihat tampilan forum diskusi.'
-    )
-
-    dummy_user = User(username='tester')
-    forum = ForumDiskusi(article=article)
-    comments = [
-        Post(id=1, author=dummy_user, content='Komentar contoh pertama', created_at='2025-10-23 10:00'),
-        Post(id=2, author=dummy_user, content='Komentar contoh kedua', created_at='2025-10-23 11:00'),
-    ]
-
-    context = {
-        'forum': forum,
-        'news': article,
-        'comments': comments,
-    }
-    return render(request, 'forum.html', context)
