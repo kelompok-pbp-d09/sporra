@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'event:event_detail' event.id %}" 
+     class="font-custom1 fixed top-24 left-6 z-50 flex items-center space-x-2 backdrop-blur-md bg-gray-700/80 text-gray-300 hover:bg-blue-600 hover:text-white transition-all px-4 py-2 rounded-full shadow-md font-medium">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    <span>Kembali ke Event</span>
+  </a>
+</div>
+
+<div class="max-w-lg mx-auto mt-8 bg-gray-800 p-6 rounded shadow">
+    <h1 class="text-2xl font-bold text-white mb-2">Pesan Tiket untuk</h1>
+    <h2 class="text-xl text-blue-400 mb-4">{{ event.judul }}</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div classclass="p-3 mb-4 rounded
+                {% if message.tags == 'success' %} bg-green-800 text-green-200 {% endif %}
+                {% if message.tags == 'error' %} bg-red-800 text-red-200 {% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-2">{{ form.ticket.label }}</label>
+            
+            <div class="space-y-2">
+                {% for radio in form.ticket %}
+                <label class="flex items-center p-3 bg-gray-700 rounded-lg has-[:checked]:bg-blue-800 has-[:checked]:border-blue-500 border border-transparent">
+                    {{ radio.tag }} <div class="ml-3">
+                        <span class="font-semibold text-white">{{ radio.choice_label }}</span>
+                        </div>
+                </label>
+                {% endfor %}
+            </div>
+            
+            {% if form.ticket.errors %}
+                {% for error in form.ticket.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="block text-sm text-gray-200 mb-1">{{ form.quantity.label }}</label>
+            {{ form.quantity }}
+            
+            {% if form.quantity.errors %}
+                {% for error in form.quantity.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <style>
+            input[type='number'] {
+                width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.375rem;
+                border: 1px solid #4B5563; background-color: #374151;
+                color: #E5E7EB; font-size: 0.95rem;
+            }
+            input:focus {
+                outline: 2px solid #3B82F6; outline-offset: 2px;
+                border-color: #3B82F6; background-color: #4B5563;
+            }
+        </style>
+
+        <button type="submit" 
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2 w-full font-semibold">
+            Konfirmasi Pesanan
+        </button>
+    </form>
+</div>
+{% endblock %}

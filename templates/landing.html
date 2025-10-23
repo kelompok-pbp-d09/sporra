@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% load static %} {% block content %}
-  <div class="relative text-center py-24 md:py-40" 
-      style="background-image: url('{% static 'images/your-stadium-image.jpg' %}')"> <div class="absolute inset-0 bg-gray-900 opacity-70"></div>
-    
+
     <div class="relative z-10 max-w-3xl mx-auto px-4">
       
       <h1 class="text-5xl md:text-7xl font-bold text-white mb-4">
@@ -21,7 +19,7 @@
           Browse News
         </a>
         
-        <a href="#" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg text-lg 
+        <a href="{% url 'ticketing:all_tickets' %}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg text-lg 
                   transition duration-200 ease-in-out transform hover:scale-105">
           Buy Tickets
         </a>
@@ -31,38 +29,50 @@
       </div>
   </div>
 
-  <div class="container mx-auto px-4 py-16">
+<div class="container mx-auto px-4 py-16">
     <h2 class="text-3xl font-bold text-white text-center mb-10">
-      Trending News Right Now
+      Trending News Right Now 
     </h2>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       
       {% for article in hottest_articles %}
-        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-          {% if article.thumbnail %}
-            <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
-                class="h-48 w-full object-cover">
-          {% endif %}
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col group transform transition duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl"> 
           
-          <div class="p-5 flex flex-col flex-grow">
-            <h3 class="text-lg font-semibold text-white mb-2">{{ article.title }}</h3>
-            <p class="text-sm text-gray-400 mb-4">
-              Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
-            </p>
-            
-            <a href="{{ article.get_absolute_url }}" 
-              class="mt-auto inline-block bg-gray-700 hover:bg-gray-600 text-white text-center font-medium py-2 px-4 rounded-lg transition duration-150">
-              Read More
-            </a>
-          </div>
+          <a href="{{ article.get_absolute_url }}" class="block">
+            <div class="h-48 w-full overflow-hidden">
+              {% if article.thumbnail %}
+                <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
+                     class="h-full w-full object-cover transition duration-300 ease-in-out group-hover:scale-110">
+              {% else %}
+                 <img src="{% static 'images/no-image-news.jpg' %}" alt="Gambar tidak tersedia"
+                      class="h-full w-full object-cover">
+              {% endif %}
+            </div>
+          
+            <div class="p-5 flex flex-col flex-grow">
+               {# Truncate judul agar tidak terlalu panjang #}
+              <h3 class="text-lg font-semibold text-white mb-2 transition duration-300 group-hover:text-blue-400">{{ article.title|truncatechars:65 }}</h3> 
+              <p class="text-sm text-gray-400 mb-4">
+                Oleh: <strong>{{ article.author.username|default:"Unknown" }}</strong>
+              </p>
+              {# <a href="{{ article.get_absolute_url }}" class="mt-auto ...">Read More</a> #}
+              
+              <span class="mt-auto text-blue-400 text-sm font-medium self-end group-hover:translate-x-1 transition-transform duration-200">
+                Read More &rarr;
+              </span>
+            </div>
+          </a>
         </div>
       {% empty %}
-        <p class="text-gray-400 col-span-full text-center">
-          No articles posted yet.
-        </p>
+        <div class="col-span-1 md:col-span-3 text-center py-12">
+            <img src="{% static 'images/empty-news.png' %}" alt="Tidak ada artikel" class="mx-auto mb-4 w-48 h-48 object-contain">
+            <p class="text-gray-400 text-lg">Belum ada artikel terbaru.</p>
+        </div>
       {% endfor %}
-      </div>
-  </div>
+    </div>
+</div>
+    </div>
+</div>
 
 {% endblock %}
