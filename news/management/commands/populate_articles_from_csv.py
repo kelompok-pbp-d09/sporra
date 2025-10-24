@@ -35,6 +35,14 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             self.stderr.write(self.style.ERROR('User "CNN Indonesia" tidak ditemukan di database. Buat dulu.'))
             return
+        
+        month_mapping_id_to_en = {
+            'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Apr', 
+            'Mei': 'May', 'Jun': 'Jun', 'Jul': 'Jul', 'Agu': 'Aug', 
+            'Sep': 'Sep', 'Okt': 'Oct', 'Nov': 'Nov', 'Des': 'Dec'
+            # Pastikan singkatan ini (Jan, Feb, Okt, dll.) SAMA PERSIS 
+            # dengan yang ada di string tanggal CSV kamu
+        }
 
         added_count = 0
         skipped_count = 0
@@ -66,6 +74,13 @@ class Command(BaseCommand):
                     publish_datetime = None
                     if publish_date_str:
                         try:
+                            date_str_en = publish_date_str
+                            for id_month, en_month in month_mapping_id_to_en.items():
+                                if id_month in date_str_en:
+                                    date_str_en = date_str_en.replace(id_month, en_month)
+                                    break
+
+
                             naive_datetime = datetime.strptime(publish_date_str, "%A, %d %b %Y %H:%M WIB")
                             server_timezone = pytz.timezone(settings.TIME_ZONE) 
                             publish_datetime = server_timezone.localize(naive_datetime)
