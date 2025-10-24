@@ -10,5 +10,7 @@ urlpatterns = [
     path('login/', login_user, name='login'),
     path('logout/', logout_user, name='logout'),
     path('edit/', edit_profile, name='edit_profile'),
-
+    path('add_status/', add_status, name='add_status'),
+    path('delete_status/<int:status_id>/', delete_status, name='delete_status'),
+    path('edit_status/<int:status_id>/', edit_status, name='edit_status'),  
 ]
