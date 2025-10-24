@@ -80,7 +80,7 @@ def book_ticket(request, event_id):
             return JsonResponse({'status': 'error', 'message': error_msg})
 
     messages.info(request, "Silakan pesan tiket langsung dari halaman event.")
-    return redirect('event:event_detail', event_id=event.id)
+    return redirect('event:event_detail', id=event.id)
 
 @login_required
 def my_bookings(request):
@@ -154,6 +154,13 @@ def create_ticket(request):
                 event = Event.objects.get(id=event_id, user=request.user)
         except Event.DoesNotExist:
             return JsonResponse({'error': 'Event not found or forbidden'}, status=403)
+
+        # ===== Pengecekan tipe tiket duplikat =====
+        if Ticket.objects.filter(event=event, ticket_type=ticket_type).exists():
+            return JsonResponse({
+                'success': False,
+                'error': f"Tiket '{ticket_type}' untuk event ini sudah ada!"
+            }, status=400)
 
         ticket = Ticket.objects.create(
             event=event,

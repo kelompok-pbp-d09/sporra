@@ -11,6 +11,8 @@ class Ticket(models.Model):
     ])
     price = models.DecimalField(max_digits=15, decimal_places=2)
     available = models.PositiveIntegerField(default=0)  # sisa tiket tersedia
+    class Meta:
+        unique_together = ('event', 'ticket_type')  # <--- mencegah tipe yang sama di 1 event
     def __str__(self):
         return f"{self.ticket_type} - {self.event.judul}"
 

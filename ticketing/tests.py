@@ -10,7 +10,7 @@ import datetime
 import json
 from django.urls import resolve
 from ticketing import views
-
+from profile_user.models import UserProfile
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -98,7 +98,7 @@ class TicketingViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username="testuser", password="12345", is_staff=False)
-        self.profile = getattr(self.user, 'userprofile', None)
+        self.profile = UserProfile.objects.create(user=self.user, role='user')
         self.client.login(username="testuser", password="12345")
 
         self.event = Event.objects.create(
@@ -166,7 +166,82 @@ class TicketingViewsTest(TestCase):
         data = response.json()
         self.assertTrue(data['success'])
         self.assertFalse(Ticket.objects.filter(id=self.ticket.id).exists())
+        
 
+    def test_book_ticket_fail_no_stock(self):
+            url = reverse('ticketing:book_ticket', kwargs={'event_id': self.event.id})
+            # Coba pesan 11 tiket, padahal stok cuma 10
+            data = {'ticket': self.ticket.id, 'quantity': 11} # <--- INI PERBAIKANNYA
+            response = self.client.post(url, data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            
+            self.assertEqual(response.status_code, 200)
+            json_data = response.json()
+            self.assertEqual(json_data['status'], 'error')
+            self.assertIn("Stok tiket", json_data['message']) # Cek pesan error
+
+    def test_create_ticket_fail_duplicate(self):
+        url = reverse('ticketing:create_ticket')
+        payload = {
+            'event': str(self.event.id),
+            'ticket_type': 'regular', # Tipe ini sudah ada
+            'price': '200.00',
+            'available': 5
+        }
+        response = self.client.post(url, data=json.dumps(payload), content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400) # Harusnya 400 Bad Request
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertIn("sudah ada", data['error'])
+
+    def test_book_ticket_fail_quantity_too_high(self):
+            url = reverse('ticketing:book_ticket', kwargs={'event_id': self.event.id})
+            # Coba pesan 501 tiket, (lebih dari maks 500)
+            data = {'ticket': self.ticket.id, 'quantity': 501} 
+            response = self.client.post(url, data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            
+            self.assertEqual(response.status_code, 200)
+            json_data = response.json()
+            self.assertEqual(json_data['status'], 'error')
+            self.assertIn("Maksimal 500 tiket", json_data['message'])
+            
+    def test_book_ticket_fail_zero_quantity(self):
+        url = reverse('ticketing:book_ticket', kwargs={'event_id': self.event.id})
+        data = {'ticket': self.ticket.id, 'quantity': 0} # Kuantitas 0
+        response = self.client.post(url, data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        
+        self.assertEqual(response.status_code, 200) # View-nya return 200 OK
+        json_data = response.json()
+        self.assertEqual(json_data['status'], 'error')
+        self.assertIn("Pastikan nilai ini lebih besar", json_data['message'])
+        
+    def test_delete_ticket_fail_forbidden(self):
+        # Buat user baru yang BUKAN pemilik event
+        other_user = User.objects.create_user(username="otheruser", password="123")
+        UserProfile.objects.create(user=other_user, role='user') # Jangan lupa buat profile-nya
+        
+        # Login sebagai user tersebut
+        self.client.logout() # Logout dari 'testuser' (pemilik)
+        self.client.login(username="otheruser", password="123")
+        
+        # Coba hapus tiket milik 'testuser'
+        url = reverse('ticketing:delete_ticket_ajax', kwargs={'ticket_id': self.ticket.id})
+        response = self.client.post(url)
+        
+        # Harusnya dapat 403 Forbidden
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()['error'], 'Forbidden')
+
+        self.client.login(username="testuser", password="12345")
+        
+    def test_delete_ticket_fail_invalid_method(self):
+        # Coba akses delete view dengan GET, bukan POST
+        url = reverse('ticketing:delete_ticket_ajax', kwargs={'ticket_id': self.ticket.id})
+        response = self.client.get(url) # Pakai .get()
+        
+        self.assertEqual(response.status_code, 405) 
+        self.assertEqual(response.json()['error'], 'Invalid method')
+            
 # ===========================
 class TicketingSeleniumTest(LiveServerTestCase):
     def setUp(self):
@@ -193,7 +268,7 @@ class TicketingSeleniumTest(LiveServerTestCase):
 
     def test_login_and_view_my_bookings(self):
         # buka halaman login
-        self.driver.get(f'{self.live_server_url}/accounts/login/')
+        self.driver.get(f'{self.live_server_url}/profile_user/login/')
 
         # tunggu form login
         WebDriverWait(self.driver, 5).until(
@@ -207,7 +282,7 @@ class TicketingSeleniumTest(LiveServerTestCase):
 
         # tunggu redirect
         WebDriverWait(self.driver, 5).until(
-            lambda d: d.current_url != f'{self.live_server_url}/accounts/login/'
+            lambda d: d.current_url != f'{self.live_server_url}/profile_user/login/'
         )
 
         # buka halaman my bookings
