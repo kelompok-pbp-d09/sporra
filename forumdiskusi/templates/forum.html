@@ -108,7 +108,23 @@
             </div>
           </div>
         {% empty %}
-          <p class="text-gray-400 text-center italic">Belum ada komentar. Jadilah yang pertama!</p>
+        <div id="no-comments" class="flex flex-col items-center justify-center gap-4 py-12">
+            <img src="{% static 'images/no-article-found.png' %}" alt="Belum ada komentar" class="w-40 h-40 object-contain opacity-90">
+            <p class="text-gray-300 text-center max-w-xs">
+            Belum ada komentar di forum ini.
+            Jadilah yang pertama!
+            </p>
+            {% if user.is_authenticated %}
+            <button id="openModalPlaceholder"
+                    class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                Tambah Komentar
+            </button>
+            {% else %}
+            <a href="{% url 'profile_user:login' %}" class="mt-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+                Login untuk Berkomentar
+            </a>
+            {% endif %}
+        </div>
         {% endfor %}
       </div>
     </div>
@@ -191,6 +207,7 @@
 $(document).ready(function() {
     let editingCommentId = null;
 
+    // === TOAST ===
     function showToast(message, color="bg-green-600") {
         const t=$("#toast");
         t.removeClass("hidden bg-green-600 bg-red-600").addClass(color).text(message);
@@ -199,26 +216,35 @@ $(document).ready(function() {
         setTimeout(()=>t.addClass("hidden"),3000);
     }
 
-    // Modal tambah komentar
-    $("#openModal").click(()=>$("#commentModal").removeClass("hidden"));
-    $("#closeModal").click(()=>$("#commentModal").addClass("hidden"));
-
-    // Modal edit komentar
-    function openEditModal(id, content) {
-        editingCommentId = id;
-        $("#editCommentContent").val(content).trigger('input'); // trigger input biar auto-resize
-        $("#editModal").removeClass("hidden");
+    // === PLACEHOLDER HANDLER ===
+    function updateEmptyState() {
+        const hasComments = $("#comment-list > .p-4").length > 0;
+        if (hasComments) {
+            $("#no-comments").addClass("hidden");
+        } else {
+            $("#no-comments").removeClass("hidden");
+        }
     }
 
+    // === MODAL TAMBAH KOMENTAR ===
+    $("#openModal, #openModalPlaceholder").click(()=>$("#commentModal").removeClass("hidden"));
+    $("#closeModal").click(()=>$("#commentModal").addClass("hidden"));
+
+    // === MODAL EDIT KOMENTAR ===
+    function openEditModal(id, content) {
+        editingCommentId = id;
+        $("#editCommentContent").val(content).trigger('input');
+        $("#editModal").removeClass("hidden");
+    }
     $("#cancelEdit").click(()=>{ $("#editModal").addClass("hidden"); editingCommentId=null; });
 
-    // Auto-resize textarea
+    // === AUTO-RESIZE TEXTAREA ===
     $(document).on("input", "#editCommentContent, #commentContent", function() {
       this.style.height = "auto";
       this.style.height = (this.scrollHeight) + "px";
     });
 
-    // Submit edit komentar
+    // === SUBMIT EDIT KOMENTAR ===
     $("#editCommentForm").submit(function(e){
         e.preventDefault();
         const newContent=$("#editCommentContent").val().trim();
@@ -246,26 +272,36 @@ $(document).ready(function() {
         });
     });
 
-    // Klik tombol Edit
+    // === KLIK TOMBOL EDIT ===
     $(document).on("click",".edit-btn", function(){
         const id=$(this).data("comment-id");
         const oldContent=$(`#comment-content-${id}`).text().trim();
         openEditModal(id, oldContent);
     });
 
-    // Hapus komentar
+    // === HAPUS KOMENTAR ===
     $(document).on("click",".delete-btn", function(){
         const id=$(this).data("comment-id");
         $.ajax({
             type:"POST",
             url:`/forum/delete_comment/${id}/`,
             data:{csrfmiddlewaretoken:$("input[name=csrfmiddlewaretoken]").val()},
-            success:function(){$(`#comment-${id}`).fadeOut(300,function(){$(this).remove();}); showToast("Komentar berhasil dihapus!"); },
-            error:(xhr)=>{let msg="Gagal menghapus komentar"; if(xhr.status===403) msg="Kamu tidak punya izin menghapus komentar ini"; showToast(msg,"bg-red-600");}
+            success:function(){
+                $(`#comment-${id}`).fadeOut(300,function(){
+                    $(this).remove();
+                    updateEmptyState(); // cek lagi setelah hapus
+                });
+                showToast("Komentar berhasil dihapus!");
+            },
+            error:(xhr)=>{
+                let msg="Gagal menghapus komentar";
+                if(xhr.status===403) msg="Kamu tidak punya izin menghapus komentar ini";
+                showToast(msg,"bg-red-600");
+            }
         });
     });
 
-    // Voting komentar
+    // === VOTING KOMENTAR ===
     $(document).on("click",".vote-btn", function(){
         const id=$(this).data("id");
         const type=$(this).data("vote");
@@ -284,19 +320,19 @@ $(document).ready(function() {
 
                 const currentSort = $("#sort-comments").val();
                 if (currentSort === "votes") {
-                const sorted = $("#comment-list > .p-4").sort((a, b) => {
-                    const scoreA = parseInt($(a).find("[id^='score-']").text()) || 0;
-                    const scoreB = parseInt($(b).find("[id^='score-']").text()) || 0;
-                    return scoreB - scoreA;
-                });
-                $("#comment-list").html(sorted);
-            }
+                    const sorted = $("#comment-list > .p-4").sort((a, b) => {
+                        const scoreA = parseInt($(a).find("[id^='score-']").text()) || 0;
+                        const scoreB = parseInt($(b).find("[id^='score-']").text()) || 0;
+                        return scoreB - scoreA;
+                    });
+                    $("#comment-list").html(sorted);
+                }
             },
             error:()=>alert("Gagal memproses vote")
         });
     });
 
-    // Tambah komentar
+    // === TAMBAH KOMENTAR ===
     $("#commentForm").submit(function(e){
         e.preventDefault();
         $.ajax({
@@ -334,58 +370,54 @@ $(document).ready(function() {
                     </div>
                 </div>`;
 
-                // masukkan komentar baru di paling atas dulu
                 $("#comment-list").prepend(newComment);
-
-                // tutup modal & reset input
                 $("#commentModal").addClass("hidden");
                 $("#commentContent").val("").trigger('input');
-
-                // tampilkan toast sukses
                 showToast("Komentar berhasil ditambahkan!");
-
-                // resort sesuai dropdown aktif
                 $("#sort-comments").trigger("change");
+                updateEmptyState(); // hide placeholder
             },
             error:()=>showToast("Gagal menambahkan komentar","bg-red-600")
         });
     });
 
-    // Sorting komentar berdasarkan dropdown
+    // SORTING KOMENTAR
     $("#sort-comments").change(function() {
-    const sortType = $(this).val();
-    const comments = $("#comment-list > .p-4").toArray();
+        const sortType = $(this).val();
+        const comments = $("#comment-list > .p-4").toArray();
 
-    comments.sort((a, b) => {
-        if (sortType === "votes") {
-        const scoreA = parseInt($(a).find("[id^='score-']").text()) || 0;
-        const scoreB = parseInt($(b).find("[id^='score-']").text()) || 0;
-        return scoreB - scoreA; // tertinggi dulu
-        } else if (sortType === "latest") {
-        const dateA = new Date($(a).data("date"));
-        const dateB = new Date($(b).data("date"));
-        return dateB - dateA; // terbaru dulu
+        // Kalau gak ada komentar sama sekali, jangan hapus placeholder
+        if (comments.length === 0) {
+            updateEmptyState();
+            return;
         }
+
+        comments.sort((a, b) => {
+            if (sortType === "votes") {
+                const scoreA = parseInt($(a).find("[id^='score-']").text()) || 0;
+                const scoreB = parseInt($(b).find("[id^='score-']").text()) || 0;
+                return scoreB - scoreA;
+            } else if (sortType === "latest") {
+                const dateA = new Date($(a).data("date"));
+                const dateB = new Date($(b).data("date"));
+                return dateB - dateA;
+            }
+        });
+
+        $("#comment-list").html(comments);
+        updateEmptyState();
     });
 
-    $("#comment-list").html(comments);
-    });
-
-    // jalankan default sorting pas halaman load
     $("#sort-comments").trigger("change");
 });
 
-// Menu dropdown
+// === MENU DROPDOWN ===
 $(document).on("click", ".menu-btn", function(e) {
   e.stopPropagation();
   const menu = $(this).siblings(".menu");
-  $(".menu").not(menu).addClass("hidden"); // nutup menu lain
+  $(".menu").not(menu).addClass("hidden");
   menu.toggleClass("hidden");
 });
-
-$(document).click(function() {
-  $(".menu").addClass("hidden"); // klik di luar nutup semua menu
-});
-
+$(document).click(function() { $(".menu").addClass("hidden"); });
 </script>
 {% endblock %}
