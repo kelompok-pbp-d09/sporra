@@ -1,9 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from .models import ForumDiskusi, Post, Vote
 from news.models import Article
+
 
 def forum(request, pk):
     article = get_object_or_404(Article, pk=pk)
@@ -15,6 +16,11 @@ def forum(request, pk):
         votes = Vote.objects.filter(user=request.user, post__in=comments)
         user_votes = {v.post.id: v.value for v in votes}  # simpan nilai numerik
 
+    hottest_articles = (
+        Article.objects.exclude(pk=article.pk)  # jangan tampilkan artikel yang sedang dibuka
+        .order_by('-news_views')[:6]  # atau '-created_at' jika tidak ada views
+    )
+
     for comment in comments:
         comment.user_vote = user_votes.get(comment.id, 0)  # default 0
 
@@ -22,11 +28,11 @@ def forum(request, pk):
         'forum': forum,
         'news': article,
         'comments': comments,
+        'hottest_articles': hottest_articles,
     }
     return render(request, 'forum.html', context)
 
-
-
+from django.utils.timezone import localtime
 
 @login_required
 def add_comment(request, pk):
@@ -48,14 +54,18 @@ def add_comment(request, pk):
         user_profile = request.user.userprofile
         user_profile.increment_komentar()
 
+        # ubah ke waktu lokal sebelum dikirim ke frontend
+        created_local = localtime(post.created_at)
+
         return JsonResponse({
             'id': post.id,
             'username': post.author.username,
             'content': post.content,
-            'created_at': post.created_at.strftime("%d %b %Y, %H:%M"),
+            'created_at': created_local.strftime("%d %b %Y, %H:%M"),
         })
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
 
 
 @login_required
@@ -104,18 +114,19 @@ def vote_post(request, post_id):
 
     value = 1 if vote_type == 'up' else -1
 
-    vote, created = Vote.objects.get_or_create(
-        post=post,
-        user=request.user,
-        defaults={'value': value}
-    )
-
-    if not created and vote.value == value:
-        vote.delete()
-        user_vote = 0
-    else:
-        vote.value = value
-        vote.save()
+    try:
+        vote = Vote.objects.get(post=post, user=request.user)
+        # kalau user klik tombol yang sama, maka unvote
+        if vote.value == value:
+            vote.delete()
+            user_vote = 0
+        else:
+            # kalau user klik arah berlawanan, maka hapus dulu (unvote)
+            vote.delete()
+            user_vote = 0
+    except Vote.DoesNotExist:
+        # user belum pernah vote, buat baru
+        Vote.objects.create(post=post, user=request.user, value=value)
         user_vote = value
 
     total = post.votes.aggregate(total=Sum('value'))['total'] or 0
@@ -126,3 +137,4 @@ def vote_post(request, post_id):
         'score': total,
         'user_vote': user_vote,
     })
+

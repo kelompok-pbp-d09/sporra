@@ -17,7 +17,6 @@ urlpatterns = [
     path('event/', include('event.urls')),
     path('ticketing/',include('ticketing.urls')),
     path('forum/', include('forumdiskusi.urls')),
-    
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
