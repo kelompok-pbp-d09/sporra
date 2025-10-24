@@ -43,13 +43,13 @@ Dengan sistem ini, Spora menjadi wadah komunitas olahraga yang aktif, interaktif
 
 ## ⚙️ **Modul Aplikasi**
 
-| No | Nama Modul | Deskripsi Singkat |
-|----|-------------|------------------|
-| 1 | **Modul Berita** | Menampilkan berita-berita olahraga terkini dan memungkinkan pengguna berdiskusi di kolom komentar. |
-| 2 | **Modul Event** | Pengguna dapat membuat, melihat, dan bergabung dalam berbagai acara olahraga. |
-| 3 | **Modul Booking Event** | Menangani sistem pendaftaran atau pemesanan untuk mengikuti event tertentu. |
-| 4 | **Modul Forum Diskusi** | Tempat pengguna membuat postingan, berdiskusi, dan memberikan komentar atau upvote. |
-| 5 | **Modul User Profil** | Menampilkan informasi profil pengguna, riwayat postingan, dan event yang diikuti. |
+| No | Nama Modul | Deskripsi Singkat | Nama Anggota |
+|----|-------------|------------------|--------------|
+| 1 | **Modul Berita** | Menampilkan berita-berita olahraga terkini dan memungkinkan pengguna berdiskusi di kolom komentar. | Farrel Faridzi Liwungang |
+| 2 | **Modul Event** | Pengguna dapat membuat, melihat, dan bergabung dalam berbagai acara olahraga. | Andi Hakim Himawan |
+| 3 | **Modul Booking Event** | Menangani sistem pendaftaran atau pemesanan untuk mengikuti event tertentu. | Dylan Pirade Ponglabba |
+| 4 | **Modul Forum Diskusi** | Tempat pengguna berdiskusi dan memberikan komentar atau upvote. | Naila Shafa Azizah |
+| 5 | **Modul User Profil** | Menampilkan informasi profil pengguna, riwayat postingan, dan event yang diikuti. | Afero Aqil Roihan |
 
 ---
 
