@@ -19,17 +19,17 @@ class TicketForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Ambil user dari kwargs
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Filter event sesuai user
-        if user and not user.userprofile.is_admin:  # user biasa
+
+        # safe check userprofile
+        is_admin = getattr(getattr(user, 'userprofile', None), 'is_admin', False)
+
+        if user and not is_admin:
             self.fields['event'].queryset = Event.objects.filter(user=user)
-        else:  # admin
+        else:
             self.fields['event'].queryset = Event.objects.all()
 
-        # Tampilkan judul event di dropdown
         self.fields['event'].label_from_instance = lambda obj: obj.judul
 
 

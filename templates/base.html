@@ -85,7 +85,6 @@
             {# Tombol Auth: Tetap terlihat di semua ukuran layar #}
             <div class="flex items-center space-x-3 mr-4 md:mr-0">
               {% if user.is_authenticated %}
-                {% if user.userprofile.is_admin %}
                     {# Tombol Admin: Mungkin perlu disembunyikan di layar sangat kecil jika terlalu penuh #}
                     <div class="hidden sm:flex items-center space-x-2">
                         <a href="{% url 'news:article-create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition duration-150">
@@ -95,7 +94,6 @@
                         Buat Acara
                         </a>
                     </div>
-                {% endif %}
 
                 <a href="{% url 'profile_user:show_profile' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
                     Profile
