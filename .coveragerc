@@ -1,0 +1,9 @@
+[run]
+omit =
+    news/management/commands/populate_articles_from_csv.py
+    news/management/commands/scrape_cnn.py
+
+[report]
+omit =
+    news/management/commands/populate_articles_from_csv.py
+    news/management/commands/scrape_cnn.py

@@ -11,3 +11,4 @@ beautifulsoup4
 coverage
 pytz
 selenium
+django.utils.six

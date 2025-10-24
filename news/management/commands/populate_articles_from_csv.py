@@ -24,11 +24,6 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f"File {csv_file_path} tidak ditemukan. Jalankan 'scrape_cnn' dulu."))
             return
         
-        # Hapus/komentari locale, kita pakai mapping manual
-        # try:
-        #     locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
-        # except locale.Error:
-        #     self.stderr.write(self.style.WARNING("Gagal set locale 'id_ID.UTF-8'."))
 
         try:
             author = User.objects.get(username='CNN Indonesia')

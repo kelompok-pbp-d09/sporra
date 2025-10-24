@@ -46,9 +46,7 @@ class Article(models.Model):
 
     @property
     def is_news_hot(self):
-        if self.created_at:
-            return (timezone.now() - self.created_at).days <= 2 and self.news_views > 10
-        return self.news_views > 20
+        return (timezone.now() - self.created_at).days <= 2 and self.news_views > 10
         
     def increment_views(self):
         self.news_views = F('news_views') + 1
