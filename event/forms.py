@@ -18,8 +18,8 @@ class EventForm(forms.ModelForm):
 
     def clean_date(self):
         date_str = self.cleaned_data.get("date", "").strip()
-
-        # Peta bulan Indonesia ke Inggris
+        date_str_lower = date_str.lower()
+        
         bulan_map = {
             "januari": "January", "februari": "February", "maret": "March",
             "april": "April", "mei": "May", "juni": "June", "juli": "July",
@@ -28,11 +28,10 @@ class EventForm(forms.ModelForm):
         }
 
         for indo, eng in bulan_map.items():
-            if indo in date_str.lower():
-                date_str = date_str.lower().replace(indo, eng)
+            if indo in date_str_lower:
+                date_str = date_str_lower.replace(indo, eng)
                 break
 
-        # Coba parsing
         parsed_date = None
         for fmt in ["%d %B %Y %H.%M", "%d %B %Y %H:%M"]:
             try:
@@ -46,14 +45,15 @@ class EventForm(forms.ModelForm):
                 "Masukkan tanggal/waktu yang valid. Contoh: 12 Juli 2025 15.00"
             )
 
-        # Jadikan timezone-aware
         if timezone.is_naive(parsed_date):
             parsed_date = timezone.make_aware(parsed_date, timezone.get_current_timezone())
 
         return parsed_date
 
-    def clean_title(self):
-        return strip_tags(self.cleaned_data.get("title", ""))
+    def clean_judul(self):
+        judul = self.cleaned_data.get("judul", "")
+        return strip_tags(judul)
 
-    def clean_description(self):
-        return strip_tags(self.cleaned_data.get("description", ""))
+    def clean_deskripsi(self):
+        deskripsi = self.cleaned_data.get("deskripsi", "")
+        return strip_tags(deskripsi)

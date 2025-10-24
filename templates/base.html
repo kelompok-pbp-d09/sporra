@@ -94,10 +94,6 @@
                         <a href="{% url 'event:create_event' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition duration-150">
                         Buat Acara
                         </a>
-                        <a href="{% url 'ticketing:create_ticket' %}"
-                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-lg text-xs transition duration-150">
-                        Buat Tiket
-                        </a>
                     </div>
                 {% endif %}
 
@@ -153,7 +149,6 @@
             <div class="sm:hidden border-t border-gray-700 pt-3 mt-3">
               <a href="{% url 'news:article-create' %}" class="text-green-400 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Buat Artikel</a>
               <a href="{% url 'event:create_event' %}" class="text-blue-400 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Buat Acara</a>
-              <a href="{% url 'ticketing:create_ticket' %}" class="text-green-400 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Buat Tiket Baru</a>
             </div>
           {% endif %}
         </div>

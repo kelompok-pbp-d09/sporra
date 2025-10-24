@@ -1,0 +1,213 @@
+<div id="editEventModal" 
+     class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
+  
+  <div id="editEventModalContent" 
+       class="bg-gray-900 text-white rounded-2xl shadow-2xl w-full max-w-2xl transform scale-95 opacity-0 transition-all duration-300 overflow-hidden">
+
+    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-700 bg-gray-800/70">
+      <h2 class="text-2xl font-bold text-white">Edit Acara</h2>
+      <button onclick="closeEditEventModal()" class="text-gray-400 hover:text-white transition text-xl">✖</button>
+    </div>
+
+    <div class="p-6 max-h-[75vh] overflow-y-auto">
+      <form id="editEventForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id="editEventFormContainer" class="space-y-6">
+          <div class="flex justify-center items-center py-8">
+            <div class="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="flex justify-end px-6 py-4 border-t border-gray-700 bg-gray-800/70">
+      <button onclick="closeEditEventModal()" 
+              class="px-5 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition font-medium">
+        Batal
+      </button>
+      <button id="saveEditEventBtn"
+              class="ml-3 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition inline-flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 hidden animate-spin" id="editSaveSpinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span id="editSaveText">Simpan Perubahan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function openEditEventModal(eventId) {
+  const modal = document.getElementById("editEventModal");
+  const modalContent = document.getElementById("editEventModalContent");
+  const formContainer = document.getElementById("editEventFormContainer");
+  const saveButton = document.getElementById("saveEditEventBtn");
+
+  modal.classList.remove("hidden");
+  setTimeout(() => modalContent.classList.add("opacity-100", "scale-100"), 10);
+  document.body.classList.add("overflow-hidden", "cursor-wait");
+
+  formContainer.innerHTML = `
+    <div class="flex justify-center items-center py-10">
+      <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  `;
+
+  fetch(`/event/ajax/get-event/${eventId}/`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("AJAX Response:", data);
+      if (data.success) {
+        formContainer.innerHTML = data.form_html;
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+          form input, form textarea, form select {
+            width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem;
+            border: 1px solid #4b5563; background-color: #374151; color: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+          }
+          form input:focus, form textarea:focus, form select:focus {
+            outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px #2563eb;
+          }
+          form textarea { min-height: 120px; }
+          form select option { background-color: #374151; color: white; }
+          input[type="date"]::-webkit-calendar-picker-indicator,
+          input[type="time"]::-webkit-calendar-picker-indicator,
+          input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+          }
+        `;
+        document.head.appendChild(style);
+
+        saveButton.onclick = () => submitEditEvent(eventId);
+      } else {
+        formContainer.innerHTML = `<p class='text-red-400 text-center py-6'>Gagal memuat data event.</p>`;
+      }
+    })
+    .catch(() => {
+      formContainer.innerHTML = `<p class='text-red-400 text-center py-6'>Terjadi kesalahan saat memuat data.</p>`;
+    })
+    .finally(() => document.body.classList.remove("cursor-wait"));
+}
+
+function closeEditEventModal() {
+  const modal = document.getElementById("editEventModal");
+  const modalContent = document.getElementById("editEventModalContent");
+  modalContent.classList.remove("opacity-100", "scale-100");
+  setTimeout(() => modal.classList.add("hidden"), 200);
+  document.body.classList.remove("overflow-hidden");
+}
+
+function submitEditEvent(eventId) {
+  const form = document.getElementById("editEventForm");
+  const formData = new FormData(form);
+  const saveButton = document.getElementById("saveEditEventBtn");
+  const spinner = document.getElementById("editSaveSpinner");
+  const text = document.getElementById("editSaveText");
+
+  form.querySelectorAll('.text-red-400.mt-1, .field-errors').forEach(el => el.remove());
+
+  saveButton.disabled = true;
+  spinner.classList.remove("hidden");
+  text.textContent = "Menyimpan...";
+
+  console.log("Submitting to URL:", `/event/event/${eventId}/edit/`);
+  console.log("CSRF Token:", getCookie("csrftoken"));
+
+  fetch(`/event/event/${eventId}/edit/`, {
+    method: "POST",
+    headers: { 
+      "X-Requested-With": "XMLHttpRequest",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: formData
+  })
+  .then(res => {
+    console.log("Response status:", res.status);
+    console.log("Response ok:", res.ok);
+    
+    if (!res.ok) {
+      return res.text().then(text => {
+        console.error("Error response body:", text);
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      });
+    }
+    return res.json();
+  })
+  .then(data => {
+    console.log("Response data:", data);
+    
+    if (data.success) {
+      showToast("Event berhasil diperbarui!", "success");
+      closeEditEventModal();
+      setTimeout(() => window.location.reload(), 800); 
+    } else if (data.errors) {
+      for (const [field, messages] of Object.entries(data.errors)) {
+        const fieldEl = document.querySelector(`[name="${field}"]`);
+        if (fieldEl) {
+          let errContainer = fieldEl.parentElement.querySelector('.field-errors');
+          if (!errContainer) {
+            errContainer = document.createElement('div');
+            errContainer.className = 'field-errors text-sm text-red-400 mt-1';
+            fieldEl.parentElement.appendChild(errContainer);
+          }
+          errContainer.innerHTML = messages.map(msg => `<p>${msg}</p>`).join('');
+        }
+      }
+      showToast("Periksa kembali input yang salah.", "error");
+    } else if (data.error) {
+      showToast(`Gagal: ${data.error}`, "error");
+    } else {
+      showToast("Gagal memperbarui event. Terjadi kesalahan tak dikenal.", "error");
+    }
+  })
+  .catch(err => {
+    console.error("Detailed error:", err);
+    showToast(`Terjadi kesalahan: ${err.message}`, "error");
+  })
+  .finally(() => {
+    spinner.classList.add("hidden");
+    text.textContent = "Simpan Perubahan";
+    saveButton.disabled = false;
+  });
+}
+
+document.addEventListener("click", e => {
+  const modal = document.getElementById("editEventModal");
+  if (e.target === modal) closeEditEventModal();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeEditEventModal();
+});
+
+if (!window.showToast) {
+  window.showToast = (msg, type) => {
+    const toast = document.createElement("div");
+    toast.className = `
+      fixed bottom-6 right-6 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium z-[10000]
+      transition-all duration-300 ${type === "error" ? "bg-red-600" : "bg-green-600"}
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("opacity-0", "translate-y-3"), 2500);
+    setTimeout(() => toast.remove(), 3000);
+  };
+}
+</script>

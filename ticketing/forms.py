@@ -17,13 +17,22 @@ class TicketForm(forms.ModelForm):
             'price': forms.NumberInput(attrs={'class': 'border rounded p-2 w-full', 'step': '0.01'}),
             'available': forms.NumberInput(attrs={'class': 'border rounded p-2 w-full'}),
         }
+
     def __init__(self, *args, **kwargs):
+        # Ambil user dari kwargs
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # Filter event sesuai user
+        if user and not user.userprofile.is_admin:  # user biasa
+            self.fields['event'].queryset = Event.objects.filter(user=user)
+        else:  # admin
+            self.fields['event'].queryset = Event.objects.all()
+
         # Tampilkan judul event di dropdown
         self.fields['event'].label_from_instance = lambda obj: obj.judul
 
-        
-        
+
 class TicketSelectionForm(forms.Form):
     ticket = forms.ModelChoiceField(
         queryset=Ticket.objects.none(),
@@ -39,19 +48,9 @@ class TicketSelectionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        # 1. Ambil 'event' dari kwargs SEBELUM hal lain.
-        #    Ini akan menghapus 'event' dari dict kwargs.
         event = kwargs.pop('event')
-        
-        # 2. SEKARANG panggil super() dengan kwargs yang sudah "bersih"
         super().__init__(*args, **kwargs)
-        
-        # 3. Gunakan 'event' untuk mengisi field 'ticket'
-        #    Field-nya bernama 'ticket', bukan 'event'
         self.fields['ticket'].queryset = Ticket.objects.filter(event=event, available__gt=0)
-        
-        # 4. (Opsional) Buat label yang lebih bagus untuk radio button
-        #    Ini akan menampilkan sesuatu seperti: "VIP (Rp 100000) - Sisa 50"
         self.fields['ticket'].label_from_instance = lambda obj: (
             f"{obj.get_ticket_type_display()} "
             f"(Rp {obj.price:,.0f}) - "
