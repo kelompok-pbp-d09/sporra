@@ -1,77 +1,340 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mx-auto p-6 bg-gray-900">
-    <!-- Profile Header -->
-    <div class="bg-gray-800 rounded-lg p-6 mb-6">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <img src="{{ user_profile.profile_picture|default:'https://cdn-icons-png.flaticon.com/128/1077/1077063.png' }}" 
-                     class="w-24 h-24 rounded-full" 
+{# Padding container lebih kecil di mobile (p-4), lebih besar di layar md ke atas (md:p-6) #}
+<div class="container mx-auto p-4 md:p-6 bg-gray-900">
+
+    <div class="bg-gray-800 rounded-lg p-4 md:p-6 mb-6">
+        {# Flex column di mobile, row di md ke atas. Item align center di md ke atas #}
+        <div class="flex flex-col md:flex-row items-center justify-between">
+            {# Bagian Kiri: Gambar + Info Teks #}
+            {# Flex column di mobile, row di md ke atas. Item center di mobile, start di md #}
+            <div class="flex flex-col md:flex-row items-center md:items-start text-center md:text-left w-full md:w-auto mb-4 md:mb-0">
+                {# Ukuran gambar lebih kecil di mobile #}
+                <img src="{{ user_profile.profile_picture|default:'https://cdn-icons-png.flaticon.com/128/1077/1077063.png' }}"
+                     class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover mb-4 md:mb-0 md:mr-6 flex-shrink-0" 
                      alt="Profile Picture">
                 <div>
-                    <h1 class="text-2xl font-bold text-white">{{ user_profile.full_name }}</h1>
-                    <p class="text-gray-400">@{{ user_profile.user.username }}</p>
-                    <p class="text-gray-300 mt-2">{{ user_profile.bio }}</p>
-                    <p class="text-gray-400 mt-1">📱 {{ user_profile.phone }}</p>
+                    {# Ukuran teks judul sedikit lebih kecil di mobile #}
+                    <h1 class="text-xl md:text-2xl font-bold text-white">
+                        {{ user_profile.full_name }}
+                        {% if user_profile.is_admin %}
+                            <span class="ml-2 px-2 py-1 bg-red-600 text-xs rounded-full">Admin</span>
+                        {% endif %}
+                    </h1>
+                    <p class="text-gray-400 text-sm md:text-base">@{{ user_profile.user.username }}</p>
+                    <p class="text-gray-300 mt-2 text-sm md:text-base">{{ user_profile.bio|default:"-" }}</p>
+                    <p class="text-gray-400 mt-1 text-sm md:text-base">📱 {{ user_profile.phone|default:"-" }}</p>
                 </div>
             </div>
-            <a href="{% url 'profile_user:edit_profile' %}" 
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+            {# Tombol Edit Profile #}
+            {# Margin atas di mobile, tidak ada di md ke atas. Lebar penuh di mobile, auto di md #}
+            {% if is_own_profile %}
+            <a href="{% url 'profile_user:edit_profile' %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-4 md:mt-0 w-full md:w-auto text-center md:text-left">
                 Edit Profile
             </a>
-        </div>  
-    </div>
-
-    <!-- Statistics -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="bg-gray-800 p-4 rounded-lg text-center">
-            <h3 class="text-xl font-bold text-white">{{ user_profile.post_created }}</h3>
-            <p class="text-gray-400">Posts</p>
-        </div>
-        <div class="bg-gray-800 p-4 rounded-lg text-center">
-            <h3 class="text-xl font-bold text-white">{{ user_profile.news_created }}</h3>
-            <p class="text-gray-400">News</p>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Status Section -->
-    <div class="bg-gray-800 rounded-lg p-6 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-white">Status Saya</h2>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+    {# Grid ini sudah cukup responsif #}
+    <div class="grid {% if user_profile.is_admin %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-4 mb-6">
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <h3 class="text-lg md:text-xl font-bold text-white">{{ user_profile.komentar_created }}</h3>
+            <p class="text-gray-400 text-sm md:text-base">Komentar</p>
+        </div>
+        {% if user_profile.is_admin %}
+        <div class="bg-gray-800 p-4 rounded-lg text-center">
+            <h3 class="text-lg md:text-xl font-bold text-white">{{ user_profile.news_created }}</h3>
+            <p class="text-gray-400 text-sm md:text-base">News</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-gray-800 rounded-lg p-4 md:p-6 mb-6">
+        {# Header Status: Flex column di mobile, row di sm ke atas #}
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+            <h2 class="text-lg md:text-xl font-bold text-white mb-3 sm:mb-0">Status Saya</h2>
+            {% if is_own_profile %}
+            <button id="open-modal-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto">
                 + Tambah Status
             </button>
+            {% endif %}
         </div>
-        <div class="space-y-4">
+        <div id="status-list" class="space-y-4">
             {% for status in user_profile.get_statuses %}
-            <div class="bg-gray-700 p-4 rounded-lg">
-                <p class="text-gray-200">{{ status.content }}</p>
+            <div class="bg-gray-700 p-4 rounded-lg relative" id="status-{{ status.id }}">
+                <p class="text-gray-200 text-sm md:text-base" id="status-content-{{ status.id }}">{{ status.content }}</p>
+                <p class="text-gray-400 text-xs md:text-sm mt-2">{{ status.created_at|date:"d M Y" }}</p>
+                {% if is_own_profile or request.user.userprofile.is_admin %}
+                {# Tombol Edit/Delete tetap di kanan atas #}
+                <div class="absolute top-2 right-2 flex gap-2">
+                    <button class="edit-btn text-yellow-500 hover:text-yellow-400 text-xs md:text-sm" data-status-id="{{ status.id }}">Edit</button>
+                    <button class="delete-btn text-red-500 hover:text-red-400 text-xs md:text-sm" data-status-id="{{ status.id }}">Delete</button>
+                </div>
+                {% endif %}
             </div>
+            {% empty %}
+            <p id="no-status-message" class="text-gray-400 text-center italic text-sm md:text-base">Belum ada status.</p>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Booked Events -->
-    <div class="bg-gray-800 rounded-lg p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-white">Event yang Dibooking</h2>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                + Tambah Event
-            </button>
-        </div>
-        <div class="space-y-4">
-            {% for event in user_profile.booked_events.all %}
-            <div class="bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-lg font-bold text-white">{{ event.judul }}</h3>
-                <p class="text-gray-300">{{ event.deskripsi }}</p>
-                <div class="flex items-center text-gray-400 mt-2 space-x-4">
-                    <p>📅 {{ event.date|date:"d M Y" }}</p>
-                    <p>📍 {{ event.lokasi }}</p>
-                </div>
-            </div>
-            {% endfor %}
+    <div class="bg-gray-800 rounded-lg p-4 md:p-6">
+        {# Header Booked Events: Flex column di mobile, row di sm ke atas #}
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+            <h2 class="text-lg md:text-xl font-bold text-white mb-3 sm:mb-0">Event yang Dibooking</h2>
+            <a href="{% url 'ticketing:my_bookings' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto text-center">
+                Lihat Tiketku
+            </a>
         </div>
     </div>
 </div>
+
+{# Tambahkan p-4 di container utama, ubah width #}
+<div id="status-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+    {# Lebar modal: full di mobile (dengan margin mx-4), max-w-md di layar sm ke atas #}
+    <div class="bg-gray-800 p-6 rounded-lg w-full max-w-md mx-4 sm:mx-0 shadow-xl">
+        <h2 id="modal-title" class="text-xl font-semibold mb-4 text-white text-center">Tambah Status</h2>
+        <form id="status-form">
+            {% csrf_token %}
+            <textarea id="status-content" name="content" rows="4"
+                class="w-full p-3 rounded bg-gray-700 text-white mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                placeholder="Apa yang kamu pikirkan?"></textarea>
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="close-modal-btn" class="bg-gray-600 hover:bg-gray-700 px-4 py-1 rounded text-white transition">Batal</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-white transition">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# Tambahkan p-4 di container utama, ubah width, ubah layout tombol #}
+<div id="delete-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+    {# Lebar modal: full di mobile (dengan margin mx-4), max-w-md di layar sm ke atas #}
+    <div class="bg-gray-800 p-6 rounded-lg w-full max-w-md mx-4 sm:mx-0 shadow-xl border border-gray-700">
+        <div class="flex items-center justify-center mb-4">
+            <div class="bg-red-600/20 rounded-full p-3">
+                <svg class="h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+        </div>
+        <h2 class="text-xl font-semibold mb-2 text-white text-center">Hapus Status?</h2>
+        <p class="text-gray-400 text-center mb-6 text-sm md:text-base" id="deleteModalMessage">Apakah Anda yakin ingin menghapus status ini? Tindakan ini tidak dapat dibatalkan.</p>
+        {# Layout tombol: kolom di mobile, baris di sm ke atas. Tombol full width di mobile #}
+        <div class="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <button type="button" id="cancel-delete-btn" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded text-white transition font-medium w-full sm:w-auto">Batal</button>
+            <button type="button" id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded text-white transition font-medium w-full sm:w-auto">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    let editingStatusId = null;
+    // Ambil container toast global dari base.html (pastikan ID-nya benar)
+    const globalToastContainer = document.getElementById('toast-container'); 
+
+    // --- FUNGSI TOAST BARU (Mengikuti style news) ---
+    function showToast(message, isSuccess = true) {
+        if (!globalToastContainer) {
+            console.error('Toast container not found!'); // Tambahkan log error
+            alert(message); // Fallback ke alert jika container tidak ada
+            return; 
+        }
+
+        const type = isSuccess ? 'success' : 'error'; // Ubah isSuccess menjadi type
+        const toastElement = document.createElement('div');
+        toastElement.className = `p-4 rounded-lg shadow-lg flex items-start space-x-3 text-sm font-medium toast-enter w-full`; 
+
+        let bgColor = 'bg-blue-600'; // Default info (jika ingin)
+        let textColor = 'text-white';
+        let iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Info icon
+        
+        if (type === 'success') {
+             bgColor = 'bg-green-600';
+             iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Success icon
+        } else if (type === 'error') {
+             bgColor = 'bg-red-600';
+             iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>`; // Error icon
+        }
+        
+        toastElement.classList.add(bgColor, textColor);
+
+        toastElement.innerHTML = `
+            <div class="flex-shrink-0">${iconSvg}</div>
+            <div class="flex-grow mr-2">${message}</div>
+            <div class="flex-shrink-0">
+                <button type="button" class="inline-flex rounded-md p-1 -m-1 focus:outline-none focus:ring-2 focus:ring-white opacity-70 hover:opacity-100 close-toast">
+                    <span class="sr-only">Dismiss</span>
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> </svg>
+                </button>
+            </div>
+        `;
+
+        const closeButton = toastElement.querySelector('.close-toast');
+        closeButton.addEventListener('click', () => removeToast(toastElement));
+
+        globalToastContainer.appendChild(toastElement);
+
+        requestAnimationFrame(() => {
+            toastElement.classList.remove('toast-enter');
+            toastElement.classList.add('toast-enter-active');
+        });
+
+        const autoCloseTimeout = setTimeout(() => removeToast(toastElement), 3000); // Durasi 3 detik
+
+        function removeToast(element) {
+            clearTimeout(autoCloseTimeout); 
+            element.classList.remove('toast-enter-active');
+            element.classList.add('toast-exit-active');
+            element.addEventListener('transitionend', () => {
+                // Periksa apakah elemen masih ada di DOM sebelum mencoba menghapusnya
+                if (element.parentNode === globalToastContainer) {
+                    globalToastContainer.removeChild(element);
+                }
+            }, { once: true }); // 'once: true' memastikan event listener dihapus setelah dijalankan
+        }
+    }
+    // --- AKHIR FUNGSI TOAST BARU ---
+
+    // --- Pengaturan Modal (Buka/Tutup) ---
+    $('#open-modal-btn').click(function() {
+        editingStatusId = null;
+        $('#modal-title').text('Tambah Status');
+        $('#status-form')[0].reset(); 
+        $('#status-modal').removeClass('hidden');
+        $('#status-content').focus(); 
+    });
+
+    function closeModal() {
+        $('#status-modal').addClass('hidden');
+    }
+
+    $('#close-modal-btn').click(closeModal);
+
+    // --- Logika Inti: Submit Form (Create & Edit) ---
+    $('#status-form').submit(function(e) {
+        e.preventDefault();
+        
+        const content = $('#status-content').val().trim();
+        if (!content) {
+            showToast('Status tidak boleh kosong.', false); // false = error
+            return;
+        }
+
+        let url = "{% url 'profile_user:add_status' %}";
+        if (editingStatusId) {
+            url = `/profile_user/edit_status/${editingStatusId}/`;
+        }
+        
+        const csrfToken = $(this).find('input[name="csrfmiddlewaretoken"]').val();
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: {
+                content: content,
+                csrfmiddlewaretoken: csrfToken 
+            },
+            success: function(response) {
+                if (editingStatusId) {
+                    $(`#status-content-${editingStatusId}`).text(response.new_content);
+                    showToast('Status berhasil diperbarui!', true); // true = success
+                } else {
+                    $('#no-status-message').hide();
+                    const newStatusHtml = `
+                        <div class="bg-gray-700 p-4 rounded-lg relative" id="status-${response.id}" style="display:none;">
+                            <p class="text-gray-200" id="status-content-${response.id}">${response.content}</p>
+                            <p class="text-gray-400 text-sm mt-2">${response.created_at}</p>
+                            {% if is_own_profile or request.user.userprofile.is_admin %}
+                            <div class="absolute top-2 right-2 flex gap-2">
+                                <button class="edit-btn text-yellow-500 hover:text-yellow-400 text-sm" data-status-id="${response.id}">Edit</button>
+                                <button class="delete-btn text-red-500 hover:text-red-400 text-sm" data-status-id="${response.id}">Delete</button>
+                            </div>
+                            {% endif %}
+                        </div>`;
+                    $('#status-list').prepend(newStatusHtml);
+                    $(`#status-${response.id}`).fadeIn(); 
+                    showToast('Status berhasil ditambahkan!', true); // true = success
+                }
+                closeModal(); 
+            },
+            error: function(xhr) {
+                const errorMessage = xhr.responseJSON ? xhr.responseJSON.error : 'Terjadi kesalahan.';
+                showToast('Gagal: ' + errorMessage, false); // false = error
+            }
+        });
+    });
+
+    // --- Event Listener untuk tombol Edit ---
+    $('#status-list').on('click', '.edit-btn', function() {
+        editingStatusId = $(this).data('status-id');
+        const currentContent = $(`#status-content-${editingStatusId}`).text();
+        
+        $('#modal-title').text('Edit Status');
+        $('#status-content').val(currentContent);
+        $('#status-modal').removeClass('hidden');
+        $('#status-content').focus();
+    });
+
+// --- Variabel untuk menyimpan ID status yang akan dihapus ---
+    let statusToDeleteId = null;
+
+    // --- Fungsi untuk menampilkan/menyembunyikan modal konfirmasi hapus ---
+    function showDeleteModal(statusId) {
+        statusToDeleteId = statusId;
+        $('#delete-confirm-modal').removeClass('hidden');
+    }
+
+    function hideDeleteModal() {
+        statusToDeleteId = null;
+        $('#delete-confirm-modal').addClass('hidden');
+    }
+
+    // --- Event Listener BARU untuk tombol Delete pada item status ---
+    $('#status-list').on('click', '.delete-btn', function() {
+        const statusId = $(this).data('status-id');
+        showDeleteModal(statusId); // Tampilkan modal, bukan confirm()
+    });
+
+    // --- Event Listener untuk tombol Batal di modal konfirmasi ---
+    $('#cancel-delete-btn').click(hideDeleteModal);
+
+    // --- Event Listener untuk tombol Konfirmasi Hapus di modal ---
+    $('#confirm-delete-btn').click(function() {
+        if (!statusToDeleteId) return; // Pastikan ada ID yang disimpan
+
+        const csrfToken = $('#status-form').find('input[name="csrfmiddlewaretoken"]').val(); // Ambil CSRF dari form status
+
+        $.ajax({
+            type: 'POST',
+            url: `/profile_user/delete_status/${statusToDeleteId}/`, // Gunakan ID yang disimpan
+            data: { csrfmiddlewaretoken: csrfToken },
+            success: function() {
+                $(`#status-${statusToDeleteId}`).fadeOut(300, function() {
+                    $(this).remove();
+                    // Tampilkan pesan "Belum ada status" jika daftar kosong
+                    if ($('#status-list').children('.bg-gray-700').length === 0) {
+                        $('#no-status-message').show();
+                    }
+                });
+                showToast('Status berhasil dihapus!', true); // true = success
+                hideDeleteModal(); // Sembunyikan modal setelah sukses
+            },
+            error: function() {
+                showToast('Gagal menghapus status.', false); // false = error
+                hideDeleteModal(); // Sembunyikan modal juga jika error
+            }
+        });
+    });
+
+});
+</script>
 {% endblock %}

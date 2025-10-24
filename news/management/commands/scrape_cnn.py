@@ -67,7 +67,7 @@ class Command(BaseCommand):
                 
                 # ... (Filter judul) ...
                 title_lower = title.lower()
-                if title_lower.startswith(("video:", "foto:", "link")): skipped_count += 1; continue
+                if title_lower.startswith(("video:", "foto:", "link", "infografis:")): skipped_count += 1; continue
                 
                 
                 time.sleep(0.5) # Jeda lebih singkat

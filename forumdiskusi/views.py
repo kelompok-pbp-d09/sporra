@@ -44,6 +44,10 @@ def add_comment(request, pk):
             content=content
         )
 
+        # Increment komentar_created counter di UserProfile
+        user_profile = request.user.userprofile
+        user_profile.increment_komentar()
+
         return JsonResponse({
             'id': post.id,
             'username': post.author.username,

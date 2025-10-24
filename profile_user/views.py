@@ -6,6 +6,9 @@ from .models import UserProfile
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Status
 
 @login_required(login_url='profile_user/login')
 def show_profile(request, username=None):
@@ -96,3 +99,48 @@ def logout_user(request):
     logout(request)
     messages.info(request, "Kamu telah berhasil logout.")
     return redirect('landing-page')
+
+@login_required
+@require_POST
+def add_status(request):
+    content = request.POST.get('content', '').strip()
+    if not content:
+        return JsonResponse({'error': 'Status tidak boleh kosong'}, status=400)
+
+    status = request.user.userprofile.add_status(content)
+    
+    return JsonResponse({
+        'id': status.id,
+        'content': status.content,
+        'created_at': status.created_at.strftime("%d %b %Y"),
+    })
+
+@login_required
+@require_POST
+def delete_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    user_profile = request.user.userprofile
+
+    if status.user == user_profile or user_profile.is_admin:
+        status.delete()
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'error': 'Anda tidak memiliki izin'}, status=403)
+
+@login_required
+@require_POST
+def edit_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    user_profile = request.user.userprofile
+
+    if status.user != user_profile and not user_profile.is_admin:
+        return JsonResponse({'error': 'Anda tidak memiliki izin'}, status=403)
+
+    new_content = request.POST.get('content', '').strip()
+    if not new_content:
+        return JsonResponse({'error': 'Status tidak boleh kosong'}, status=400)
+
+    status.content = new_content
+    status.save()
+
+    return JsonResponse({'success': True, 'new_content': status.content})
