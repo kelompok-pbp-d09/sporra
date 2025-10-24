@@ -97,11 +97,6 @@ class ArticleCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         response = super().form_valid(form)
-    
-        # Increment news_created counter di UserProfile
-        user_profile = self.request.user.userprofile
-        user_profile.increment_news()
-
         return response
 
 
