@@ -19,7 +19,7 @@ class Command(BaseCommand):
         }
         
         BASE_URL = "https://www.cnnindonesia.com"; INDEX_BASE_URL = f"{BASE_URL}/olahraga/indeks/7"
-        TOTAL_ARTICLES_TARGET = 200; all_article_elements = []; current_page = 1; max_pages_to_try = 20
+        TOTAL_ARTICLES_TARGET = 500; all_article_elements = []; current_page = 1; max_pages_to_try = 51
         
         try: locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8') 
         except locale.Error: self.stderr.write(self.style.WARNING("Gagal set locale 'id_ID.UTF-8'."))
