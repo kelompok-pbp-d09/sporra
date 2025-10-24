@@ -34,18 +34,39 @@
         </div>
     </div>
 
-    {# Statistik (tetap publik) #}
-    <div class="grid {% if user_profile.is_admin %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-4 mb-6">
+    {# --- Bagian Khusus Admin --- #}
+    {% if user_profile.is_admin %}
+    <div class="bg-gray-800 rounded-lg p-4 md:p-6 mb-6 border border-red-600/50">
+        <h2 class="text-lg md:text-xl font-bold text-white mb-3 flex items-center">
+            <svg class="h-5 w-5 inline-block mr-2 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+            </svg>
+            Privilige Admin
+        </h2>
+        <p class="text-gray-300 text-sm md:text-base">
+            Sebagai Admin, pengguna ini memiliki hak istimewa berikut di seluruh platform:
+        </p>
+        <ul class="list-disc list-inside text-gray-400 mt-2 text-sm md:text-base space-y-1">
+            <li>Membuat, mengedit, dan menghapus <strong>News</strong>.</li>
+            <li>Membuat, mengedit, dan menghapus <strong>Event</strong>.</li>
+            <li>Membuat, mengedit, dan menghapus <strong>Ticket</strong>.</li>
+            <li>Menghapus <strong>Komentar</strong> milik pengguna lain.</li>
+        </ul>
+    </div>
+    {% endif %}
+    {# --- Akhir Bagian Khusus Admin --- #}
+
+
+    {# Statistik (publik untuk semua) #}
+    <div class="grid grid-cols-2 gap-4 mb-6">
         <div class="bg-gray-800 p-4 rounded-lg text-center">
             <h3 class="text-lg md:text-xl font-bold text-white">{{ user_profile.komentar_created }}</h3>
             <p class="text-gray-400 text-sm md:text-base">Komentar</p>
         </div>
-        {% if user_profile.is_admin %}
         <div class="bg-gray-800 p-4 rounded-lg text-center">
             <h3 class="text-lg md:text-xl font-bold text-white">{{ user_profile.news_created }}</h3>
             <p class="text-gray-400 text-sm md:text-base">News</p>
         </div>
-        {% endif %}
     </div>
 
     {# --- Bagian Status (Judul dinamis) --- #}
@@ -70,8 +91,8 @@
                 <p class="text-gray-200 text-sm md:text-base" id="status-content-{{ status.id }}">{{ status.content }}</p>
                 <p class="text-gray-400 text-xs md:text-sm mt-2">{{ status.created_at|date:"d M Y" }}</p>
                 
-                {# Tombol Edit/Delete HANYA muncul jika kita pemilik ATAU kita admin #}
-                {% if is_own_profile or request.user.userprofile.is_admin %}
+                {# khusu admin #}
+                {% if is_own_profile %}
                 <div class="absolute top-2 right-2 flex gap-2">
                     <button class="edit-btn text-yellow-500 hover:text-yellow-400 text-xs md:text-sm" data-status-id="{{ status.id }}">Edit</button>
                     <button class="delete-btn text-red-500 hover:text-red-400 text-xs md:text-sm" data-status-id="{{ status.id }}">Delete</button>
