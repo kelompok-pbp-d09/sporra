@@ -33,16 +33,16 @@
 
   {% if has_ended %}
     <p class="mt-4 text-red-400 font-semibold text-center">Acara ini telah selesai. Terima kasih atas ketertarikannya!</p>
-{% else %}
-  <div class="flex justify-center mt-8">
-    <a href="{% url 'ticketing:book_ticket' event.id %}">
-      <button class="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-300">
-        <span class="relative z-10">🎟️ Join Sekarang!</span>
-        <div class="absolute inset-0 bg-blue-400/20 blur-lg opacity-0 group-hover:opacity-100 transition duration-500"></div>
-      </button>
-    </a>
-  </div>
-{% endif %}
+  {% else %}
+    <div class="flex justify-center mt-8">
+      <a href="{% url 'ticketing:book_ticket' event.id %}">
+        <button class="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-300">
+          <span class="relative z-10">🎟️ Join Sekarang!</span>
+          <div class="absolute inset-0 bg-blue-400/20 blur-lg opacity-0 group-hover:opacity-100 transition duration-500"></div>
+        </button>
+      </a>
+    </div>
+  {% endif %}
 
   <p class="mt-4">
     <span class="font-semibold">Pembuat acara:</span>
@@ -55,21 +55,17 @@
 
   {% if request.user == event.user or request.user.is_superuser %}
     <div class="flex gap-4 mt-6">
-      <!-- Edit Button -->
-      <a href="{% url 'event:edit_event' event.id %}">
-        <button class="bg-gray-600 hover:bg-gray-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
-          Edit Event
-        </button>
-      </a>
+      <button onclick="openEditEventModal('{{ event.id }}')" 
+              class="bg-gray-600 hover:bg-gray-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
+        Edit Event
+      </button>
       
-      <!-- Delete Button -->
       <button id="deleteButton" 
               class="bg-red-600 hover:bg-red-700 transition-colors text-white px-6 py-3 rounded-lg font-semibold shadow-md">
         Hapus Event
       </button>
     </div>
   {% endif %}
-
 </div>
 
 <!-- Delete Confirm -->
@@ -97,43 +93,54 @@
   </div>
 </div>
 
+{% include 'edit_event_modal.html' %}
+
 <script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const deleteButton = document.getElementById('deleteButton');
   const deleteModal = document.getElementById('deleteModal');
   const cancelDelete = document.getElementById('cancelDelete');
   const confirmDelete = document.getElementById('confirmDelete');
 
-  // Show modal when delete button is clicked
   if (deleteButton) {
     deleteButton.addEventListener('click', function() {
       deleteModal.classList.remove('hidden');
     });
   }
 
-  // Hide modal when cancel is clicked
   if (cancelDelete) {
     cancelDelete.addEventListener('click', function() {
       deleteModal.classList.add('hidden');
     });
   }
 
-  // Close modal when clicking outside
   deleteModal.addEventListener('click', function(e) {
     if (e.target === deleteModal) {
       deleteModal.classList.add('hidden');
     }
   });
 
-  // Handle delete confirmation
   if (confirmDelete) {
     confirmDelete.addEventListener('click', function() {
-      // Create form and submit
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = "{% url 'event:delete_event' event.id %}";
       
-      // Add CSRF token
       const csrfToken = getCookie('csrftoken');
       const csrfInput = document.createElement('input');
       csrfInput.type = 'hidden';
@@ -146,23 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Get CSRF token from cookies
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  // Close modal with Escape key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
       deleteModal.classList.add('hidden');
