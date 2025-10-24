@@ -28,6 +28,16 @@ def book_ticket(request, event_id):
         if form.is_valid():
             ticket = form.cleaned_data['ticket']
             quantity = form.cleaned_data['quantity']
+            
+            
+            # ✅ Batasi jumlah tiket
+            MAX_TICKET_QUANTITY = 500
+            if quantity > MAX_TICKET_QUANTITY:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Maksimal {MAX_TICKET_QUANTITY} tiket per order.'
+                })
+
 
             # ✅ Validasi stok (langsung return JSON untuk toast)
             if quantity <= 0:

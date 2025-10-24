@@ -9,7 +9,7 @@ class Ticket(models.Model):
         ('regular', 'Regular'),
         ('vip', 'VIP'),
     ])
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=15, decimal_places=2)
     available = models.PositiveIntegerField(default=0)  # sisa tiket tersedia
     def __str__(self):
         return f"{self.ticket_type} - {self.event.judul}"
@@ -20,7 +20,7 @@ class Booking(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     booked_at = models.DateTimeField(auto_now_add=True)
     total_price = models.DecimalField(
-        max_digits=10, decimal_places=2,
+        max_digits=15, decimal_places=2,
         default=Decimal('0.00')  )
 
     def __str__(self):
