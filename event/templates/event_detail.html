@@ -35,7 +35,7 @@
     <p class="mt-4 text-red-400 font-semibold text-center">Acara ini telah selesai. Terima kasih atas ketertarikannya!</p>
   {% else %}
     <div class="flex justify-center mt-8">
-      <a href="{% url 'ticketing:book_ticket' event.id %}">
+      <a href="{% url 'ticketing:all_tickets' %}">
         <button class="relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transition-all duration-300">
           <span class="relative z-10">🎟️ Join Sekarang!</span>
           <div class="absolute inset-0 bg-blue-400/20 blur-lg opacity-0 group-hover:opacity-100 transition duration-500"></div>
