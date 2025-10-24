@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class ForumDiskusi(models.Model):
-    article = models.ForeignKey('news.Article', on_delete=models.CASCADE, related_name='forum_diskusi', null=True, blank=True)
+    article = models.ForeignKey('news.Article', on_delete=models.CASCADE, related_name='forum', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
