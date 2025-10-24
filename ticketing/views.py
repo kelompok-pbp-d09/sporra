@@ -77,9 +77,25 @@ def my_bookings(request):
     return render(request, "my_bookings.html", {"bookings": bookings})
 
 def all_tickets(request):
-        tickets = Ticket.objects.select_related('event').all()
-        return render(request, "all_tickets.html", {"tickets": tickets})
-
+    tickets = Ticket.objects.select_related('event').all()
+    
+    # Tentukan event yang bisa dipilih untuk membuat tiket
+    if request.user.is_authenticated:
+        try:
+            if request.user.userprofile.is_admin:
+                events = Event.objects.all()  # Admin bisa pilih semua event
+            else:
+                events = request.user.event_set.all()  # User biasa hanya eventnya sendiri
+        except:
+            events = request.user.event_set.all()
+    else:
+        events = Event.objects.none()
+    
+    return render(request, "all_tickets.html", {
+        "tickets": tickets,
+        "events": events  # ← Kirim ke template
+    })
+    
 def get_tickets_ajax(request):
     tickets = Ticket.objects.select_related('event').all()
     data = []
