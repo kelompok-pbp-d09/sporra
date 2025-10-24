@@ -142,6 +142,9 @@ let isCreate = true;
 let currentEventId = null;
 let availableTickets = [];
 const globalToastContainer = document.getElementById('toast-container');
+const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+const loginUrl = "{% url 'profile_user:login' %}";
+
 
 let allTicketsMasterList = [];
 
@@ -210,13 +213,14 @@ function showToast(message, type = 'info') {
 
 // Booking Modal Functions
 async function openBookingModal(eventId, eventTitle) {
-  {% if not user.is_authenticated %}
+  if (!isAuthenticated) {
     showToast('⚠️ Silakan login terlebih dahulu untuk memesan tiket!', 'warning');
     setTimeout(() => {
-      window.location.href = "{% url 'profile_user:login' %}";
+      window.location.href = loginUrl;
     }, 1500);
     return;
-  {% endif %}
+  }
+
 
   currentEventId = eventId;
   document.getElementById('booking-event-title').textContent = eventTitle;
@@ -391,7 +395,10 @@ function closeDeleteModal() {
   document.getElementById('delete-modal').classList.add('hidden');
 }
 
-document.getElementById('open-create-modal').addEventListener('click', () => openModal());
+const createModalBtn = document.getElementById('open-create-modal');
+if (createModalBtn) {
+  createModalBtn.addEventListener('click', () => openModal());
+}
 
 document.getElementById('modal-form').addEventListener('submit', async function(e){
   e.preventDefault();
