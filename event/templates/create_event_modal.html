@@ -1,0 +1,237 @@
+<div id="createEventModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
+  
+  <div id="createEventModalContent" class="bg-gray-900 text-white rounded-2xl shadow-2xl w-full max-w-2xl transform scale-95 opacity-0 transition-all duration-300 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-700 bg-gray-800/70">
+      <h2 class="text-2xl font-bold text-white">Tambahkan Acara Baru!</h2>
+      <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-white transition text-xl">
+        ✖
+        <span class="sr-only">Close modal</span>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <div class="p-6 max-h-[75vh] overflow-y-auto">
+      <form method="POST" id="create-event-form" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="block text-gray-300 font-medium mb-2">
+              {{ field.label }}
+            </label>
+            <div class="w-full">
+              {{ field }}
+            </div>
+            {% if field.help_text %}
+              <p class="mt-1 text-sm text-gray-400">{{ field.help_text }}</p>
+            {% endif %}
+            <div class="field-errors">
+              {% for error in field.errors %}
+                <p class="mt-1 text-sm text-red-400">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+
+        <style>
+          /* Base input styles */
+          #createEventModal form input,
+          #createEventModal form textarea,
+          #createEventModal form select {
+              width: 100%;
+              padding: 0.75rem 1rem;
+              border-radius: 0.5rem;
+              border: 1px solid #4b5563;
+              background-color: #374151 !important;
+              color: white !important;
+              caret-color: white !important;
+              transition: border-color 0.2s, box-shadow 0.2s;
+          }
+
+          /* Focus state */
+          #createEventModal form input:focus,
+          #createEventModal form textarea:focus,
+          #createEventModal form select:focus {
+              outline: none;
+              border-color: #2563eb;
+              box-shadow: 0 0 0 2px #2563eb;
+              background-color: #374151 !important;
+              color: white !important;
+              caret-color: white !important;
+          }
+
+          /* Textarea height */
+          #createEventModal form textarea {
+              min-height: 120px;
+          }
+
+          /* Dropdown options */
+          #createEventModal form select option {
+              background-color: #374151;
+              color: white;
+              padding: 0.5rem;
+          }
+
+          /* Date/time picker icon */
+          #createEventModal form input[type="date"]::-webkit-calendar-picker-indicator,
+          #createEventModal form input[type="time"]::-webkit-calendar-picker-indicator,
+          #createEventModal form input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+              filter: invert(1);
+          }
+
+          /* Chrome/Edge autofill fix */
+          #createEventModal form input:-webkit-autofill,
+          #createEventModal form input:-webkit-autofill:hover,
+          #createEventModal form input:-webkit-autofill:focus,
+          #createEventModal form input:-webkit-autofill:active {
+              -webkit-box-shadow: 0 0 0 1000px #374151 inset !important;
+              -webkit-text-fill-color: white !important;
+              color: white !important;
+              caret-color: white !important;
+              transition: background-color 5000s ease-in-out 0s;
+          }
+        </style>
+      </form>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="flex justify-end px-6 py-4 border-t border-gray-700 bg-gray-800/70">
+      <button type="button" id="cancelModalBtn" class="px-5 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition font-medium">
+        Batal
+      </button>
+      <button type="submit" id="submit-button" form="create-event-form" class="ml-3 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition inline-flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 animate-spin hidden" id="submit-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span id="submit-text">Tambah Acara</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('createEventModal');
+  const modalContent = document.getElementById('createEventModalContent');
+  const form = document.getElementById('create-event-form');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const submitButton = document.getElementById('submit-button');
+  const submitSpinner = document.getElementById('submit-spinner');
+  const submitText = document.getElementById('submit-text');
+
+  window.openCreateEventModal = function() {
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+
+    setTimeout(() => {
+      modalContent.classList.remove('opacity-0', 'scale-95');
+      modalContent.classList.add('opacity-100', 'scale-100');
+    }, 10);
+  };
+
+  function closeModal() {
+    modalContent.classList.remove('opacity-100', 'scale-100');
+    modalContent.classList.add('opacity-0', 'scale-95');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      form.reset();
+      document.querySelectorAll('#createEventModal .field-errors p').forEach(el => el.remove());
+
+      submitButton.disabled = false;
+      submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+      submitSpinner.classList.add('hidden');
+      submitText.textContent = 'Tambah Acara';
+    }, 200);
+  }
+
+  closeModalBtn.addEventListener('click', closeModal);
+  cancelModalBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // loading state
+    submitButton.disabled = true;
+    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    submitSpinner.classList.remove('hidden');
+    submitText.textContent = 'Membuat Acara...';
+
+    const formData = new FormData(form);
+
+    fetch('{% url "event:create_event" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (window.showToast) {
+          window.showToast('Acara berhasil dibuat!', 'success');
+        }
+        
+        closeModal();
+        
+        if (window.loadEvents) {
+          window.loadEvents();
+        } else {
+          window.location.href = data.redirect_url || '{% url "event:home_event" %}';
+        }
+      } else {
+        if (data.errors) {
+          document.querySelectorAll('#createEventModal .field-errors p').forEach(el => el.remove());
+
+          Object.keys(data.errors).forEach(fieldName => {
+            const field = document.querySelector(`#createEventModal [name="${fieldName}"]`);
+            if (field) {
+              const errorContainer = field.closest('div').querySelector('.field-errors');
+              if (errorContainer) {
+                data.errors[fieldName].forEach(error => {
+                  const errorP = document.createElement('p');
+                  errorP.className = 'mt-1 text-sm text-red-400';
+                  errorP.textContent = error;
+                  errorContainer.appendChild(errorP);
+                });
+              }
+            }
+          });
+          
+          if (window.showToast) {
+            window.showToast('Terdapat kesalahan pada form. Mohon periksa kembali.', 'error');
+          }
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      if (window.showToast) {
+        window.showToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
+      }
+    })
+    .finally(() => {
+      submitButton.disabled = false;
+      submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+      submitSpinner.classList.add('hidden');
+      submitText.textContent = 'Tambah Acara';
+    });
+  });
+});
+</script>

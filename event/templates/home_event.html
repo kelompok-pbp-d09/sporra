@@ -8,11 +8,11 @@
 
 {% block content %}
 <div class="mt-10 flex flex-wrap gap-4 md:gap-6">
-  <a href="{% url 'event:create_event' %}" 
+  <button onclick="openCreateEventModal()" 
      class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg text-lg 
             transition duration-200 ease-in-out transform hover:scale-105">
     Tambah Event Baru
-  </a>
+  </button>
 </div>
 
 <hr class="my-8 border-gray-500">
@@ -20,7 +20,7 @@
 <div class="flex items-center justify-between mb-6">
   <h1 class="text-3xl font-bold text-white">Daftar Event</h1>
   
-  {# --- Tombol Refresh --- #}
+  <!--Refresh button -->
   <button id="refresh-button" 
           class="inline-flex items-center bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 animate-spin hidden" id="loading-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -79,14 +79,21 @@
   </div>
 </div>
 
+{% include 'create_event_modal.html' %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   let currentCategory = '';
   let currentPage = 1;
   let eventToDelete = null;
   const CURRENT_USER_ID = "{{ user.id|default_if_none:'' }}";
-  const EVENTS_PER_PAGE = 6; // event/hal
+  const EVENTS_PER_PAGE = 6;
   const globalToastContainer = document.getElementById('toast-container');
+
+  window.showToast = showToast;
+  window.loadEvents = function() {
+    loadEvents(currentCategory, currentPage);
+  };
 
   loadEvents(currentCategory, currentPage);
 
@@ -128,14 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
   document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
   
-  // Close click outside
   document.getElementById('deleteModal').addEventListener('click', function(e) {
     if (e.target === this) {
       hideDeleteModal();
     }
   });
   
-  //Close esc key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('deleteModal');
@@ -210,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function loadEvents(category, page = 1, isRefresh = false) {
     const container = document.getElementById('events-container');
     
-    // loading state
     container.innerHTML = `
       <div class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
@@ -224,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
     params.append('page', page);
     if (params.toString()) url += `?${params.toString()}`;
 
-    // Fetch events
     fetch(url)
       .then(response => {
         if (!response.ok) {
@@ -239,7 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
           showToast('Daftar event berhasil diperbarui!', 'success');
         }
         
-        //  refresh button
         if (isRefresh) {
           resetRefreshButton();
         }
@@ -275,11 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('events-container');
     let html = '';
 
-    // upcoming events
     const upcomingEvents = data.upcoming_events || [];
     const pastEvents = data.past_events || [];
     
-    // Calculate both sections
     const PAST_EVENTS_PER_PAGE = 3;
     const startIdx = (page - 1) * EVENTS_PER_PAGE;
     const endIdx = startIdx + EVENTS_PER_PAGE;
@@ -289,12 +289,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const pastEndIdx = pastStartIdx + PAST_EVENTS_PER_PAGE;
     const paginatedPast = pastEvents.slice(pastStartIdx, pastEndIdx);
     
-    // Calculate total pages
     const totalUpcomingPages = Math.ceil(upcomingEvents.length / EVENTS_PER_PAGE);
     const totalPastPages = Math.ceil(pastEvents.length / PAST_EVENTS_PER_PAGE);
     const totalPages = Math.max(totalUpcomingPages, totalPastPages);
 
-    // Upcoming events section
     if (paginatedUpcoming.length > 0) {
       html += '<h2 class="text-2xl font-semibold text-white mb-4">Event yang Akan Datang</h2>';
       html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">';
@@ -322,7 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     html += '<hr class="my-8 border-gray-700">';
 
-    // Past events (3 per page)
     if (paginatedPast.length > 0) {
       html += '<h2 class="text-2xl font-semibold text-gray-300 mb-4">Event yang Sudah Selesai</h2>';
       html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">';
@@ -348,7 +345,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function createPaginationControls(currentPage, totalPages) {
     let html = '<nav class="flex justify-center mt-8 space-x-2">';
     
-    // Button First & Previous
     if (currentPage > 1) {
       html += `
         <button data-page="1" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
@@ -360,14 +356,12 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
     }
     
-    // info
     html += `
       <span class="py-2 px-4 bg-gray-800 text-gray-400 rounded-lg">
         Halaman ${currentPage} dari ${totalPages}
       </span>
     `;
     
-    // Button Next & Last
     if (currentPage < totalPages) {
       html += `
         <button data-page="${currentPage + 1}" class="pagination-btn py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
@@ -402,7 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateClass = isPast ? 'text-red-400' : 'text-gray-300';
     const dateIcon = isPast ? '❌ Selesai — ' : '🕒 ';
     
-    // Show delete button only if user owns the event
     const deleteButton = CURRENT_USER_ID && Number(CURRENT_USER_ID) === Number(event.user_id)
       ? `<button onclick="showDeleteModal('${event.id}', '${escapeHtml(event.judul).replace(/'/g, "\\'")}')" 
                  class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-all duration-200 shadow-lg z-10"
