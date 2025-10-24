@@ -52,9 +52,6 @@ def add_comment(request, pk):
 
         # ubah ke waktu lokal sebelum dikirim ke frontend
         created_local = localtime(post.created_at)
-        # Increment komentar_created counter di UserProfile
-        user_profile = request.user.userprofile
-        user_profile.increment_komentar()
 
         return JsonResponse({
             'id': post.id,
