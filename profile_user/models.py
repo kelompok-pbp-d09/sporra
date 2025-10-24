@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import F
+from django.db.models.functions import Greatest
 
 class UserProfile(models.Model):
     ROLE_CHOICES = [
@@ -14,9 +16,6 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.URLField(blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  #Role field 
-    komentar_created = models.PositiveIntegerField(default=0) #banyak komentar yang telah dipost
-    news_created = models.PositiveIntegerField(default=0) #banyak berita yang telah dibuat
-    # events_created = models.PositiveIntegerField(default=0) #banyak event yang telah dibuat
 
 
     def __str__(self):
@@ -25,27 +24,24 @@ class UserProfile(models.Model):
     @property
     def is_admin(self):
         return self.role == 'admin'
-    
-    def increment_komentar(self):
-        self.komentar_created += 1
-        self.save()
 
-    def increment_news(self):
-        self.news_created += 1
-        self.save()
+    @property
+    def komentar_created(self):
+        """Menghitung jumlah Post (komentar) user secara real-time."""
+        from forumdiskusi.models import Post
+        return Post.objects.filter(author=self.user).count()
 
-    # def increment_events(self):
-    #     self.events_created += 1
-    #     self.save()
+    @property
+    def news_created(self):
+        """Menghitung jumlah Article (news) user secara real-time."""
+        from news.models import Article
+        return Article.objects.filter(author=self.user).count()
 
     def add_status(self, content):
         return Status.objects.create(user=self, content=content)
 
     def get_statuses(self):
         return self.statuses.all()
-
-    #filter informasi
-    #STATUS
 
 class Status(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='statuses')
