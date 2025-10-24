@@ -49,7 +49,7 @@ Dengan sistem ini, Spora menjadi wadah komunitas olahraga yang aktif, interaktif
 | 2 | **Modul Event** | Pengguna dapat membuat, melihat, dan bergabung dalam berbagai acara olahraga. |
 | 3 | **Modul Booking Event** | Menangani sistem pendaftaran atau pemesanan untuk mengikuti event tertentu. |
 | 4 | **Modul Forum Diskusi** | Tempat pengguna membuat postingan, berdiskusi, dan memberikan komentar atau upvote. |
-| 5 | **Modul User Profil** | Menampilkan informasi profil pengguna, riwayat postingan, dan event yang diikuti. |
+| 5 | **Modul User Profil** | Menampilkan informasi profil pengguna, stat keaktifan, status, dan event yang diikuti. |
 
 ---
 
@@ -57,7 +57,7 @@ Dengan sistem ini, Spora menjadi wadah komunitas olahraga yang aktif, interaktif
 
 | Role | Hak Akses |
 |------|------------|
-| 🧑‍💻 **User Biasa** | - Membuat dan menghapus posting miliknya sendiri.<br> - Memberikan komentar dan balasan.<br> - Membuat event dan mengelolanya.<br> - Melakukan booking event. |
+| 🧑‍💻 **User Biasa** | - Membuat dan menghapus posting miliknya sendiri.<br> - Memberikan komentar dan balasan.<br> - Membuat event dan mengelolanya.<br> - Melakukan booking event.<br> -membuat artikel |
 | 👑 **Admin** | - Memiliki seluruh hak User Biasa.<br> - Dapat menghapus posting, event, dan komentar dari pengguna lain. |
 
 ---
