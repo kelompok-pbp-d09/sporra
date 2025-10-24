@@ -101,7 +101,9 @@
                         data-id="{{ comment.id }}" data-vote="down">▼</button>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-blue-300">{{ comment.author.username }}</p>
+                <a href="{% url 'profile_user:show_profile' comment.author.username %}" class="text-blue-300 hover:text-blue-400 transition duration-150">
+                    {{ comment.author.username|default:"Unknown" }}
+                </a>
                 <p id="comment-content-{{ comment.id }}" class="text-gray-200 whitespace-pre-line mt-1 break-words">{{ comment.content }}</p>
                 <p class="text-sm text-gray-500 mt-1">{{ comment.created_at|date:"d M Y, H:i" }}</p>
               </div>
