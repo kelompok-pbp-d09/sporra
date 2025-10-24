@@ -100,13 +100,6 @@ def get_tickets_ajax(request):
     tickets = Ticket.objects.select_related('event').all()
     data = []
     for t in tickets:
-        can_edit = False
-        if request.user.is_authenticated:
-            try:
-                can_edit = request.user == t.event.user or request.user.userprofile.is_admin
-            except:
-                can_edit = request.user == t.event.user
-        
         data.append({
             "id": t.id,
             "event_title": t.event.judul,
@@ -114,7 +107,7 @@ def get_tickets_ajax(request):
             "price": float(t.price),
             "available": t.available,
             "event_id": t.event.id,
-            "can_edit": can_edit,
+            "can_edit": request.user == t.event.user or request.user.userprofile.is_admin,
         })
     return JsonResponse({"tickets": data})
 
@@ -163,7 +156,6 @@ def create_ticket(request):
             }
         })
 
-
 @login_required
 def get_my_bookings_ajax(request):
     bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
@@ -177,8 +169,7 @@ def get_my_bookings_ajax(request):
             "location": b.ticket.event.lokasi or "Lokasi belum ditentukan",
             "quantity": b.quantity,
             "total_price": int(b.total_price),
-            "booked_at": b.booked_at.strftime("%d %b %Y, %H:%M") if b.booked_at else "-",
-            "event_url": reverse('event:event_detail', args=[b.ticket.event.id])  # ← TAMBAHKAN BARIS INI
+            "booked_at": b.booked_at.strftime("%d %b %Y, %H:%M") if b.booked_at else "-"
         })
 
     return JsonResponse({"bookings": data})

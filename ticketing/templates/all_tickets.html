@@ -391,10 +391,7 @@ function closeDeleteModal() {
   document.getElementById('delete-modal').classList.add('hidden');
 }
 
-const openCreateBtn = document.getElementById('open-create-modal');
-if (openCreateBtn) {
-  openCreateBtn.addEventListener('click', () => openModal());
-}
+document.getElementById('open-create-modal').addEventListener('click', () => openModal());
 
 document.getElementById('modal-form').addEventListener('submit', async function(e){
   e.preventDefault();
