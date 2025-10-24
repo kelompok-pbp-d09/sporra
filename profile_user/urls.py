@@ -1,5 +1,6 @@
 from django.urls import path
 from profile_user.views import *
+from . import views
 
 
 app_name = 'profile_user'
@@ -13,4 +14,5 @@ urlpatterns = [
     path('add_status/', add_status, name='add_status'),
     path('delete_status/<int:status_id>/', delete_status, name='delete_status'),
     path('edit_status/<int:status_id>/', edit_status, name='edit_status'),  
+    path('<str:username>/', views.show_profile, name='show_profile'),
 ]

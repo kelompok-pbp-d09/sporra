@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Status
 
-@login_required(login_url='profile_user/login')
+@login_required
 def show_profile(request, username=None):
     if username:
         # Jika username diberikan, tampilkan profile user tersebut
