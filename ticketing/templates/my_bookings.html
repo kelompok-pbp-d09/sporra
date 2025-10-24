@@ -5,75 +5,259 @@
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
   <div class="max-w-6xl mx-auto">
-   
-<!-- Header Section -->
-<div class="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-gray-700 pb-4">
 
-  <!-- Judul di kiri -->
-  <h1 class="text-5xl font-bold text-white mb-4 sm:mb-0 text-center sm:text-left">
-    🎟️ My Bookings
-  </h1>
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mb-8 border-b border-gray-700 pb-4 gap-3">
+      <h1 class="text-4xl font-bold text-white mb-4 sm:mb-0 flex items-center gap-3">
+        🎟️ My Bookings
+        <button id="refresh-button" 
+                class="inline-flex items-center bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition duration-150 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 animate-spin hidden" id="loading-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span id="refresh-text">Refresh</span>
+        </button>
+      </h1>
 
-  <!-- Tombol di kanan -->
-  <a href="{% url 'event:home_event' %}" 
-     class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg shadow transition">
-    <i class="fa-solid fa-arrow-left"></i>
-    Kembali ke Event
-  </a>
+      <a href="{% url 'event:home_event' %}" 
+         class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg shadow transition">
+        <i class="fa-solid fa-arrow-left"></i>
+        Kembali ke Event
+      </a>
+    </div>
 
-</div>
-    {% if bookings %}
-      <!-- Grid Booking -->
+    <!-- Container Booking -->
+    <div id="bookings-container">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for booking in bookings %}
-          <div class="bg-gray-800 hover:bg-gray-750 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
-            
-            <!-- Header -->
+          <div class="booking-card bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
             <div class="flex justify-between items-start mb-3">
               <h2 class="text-xl font-semibold text-white">{{ booking.ticket.event.judul }}</h2>
-              <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                Joined
-              </span>
+              <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">Joined</span>
             </div>
-
             <hr class="border-gray-700 my-3">
-
-            <!-- Event Info -->
             <p class="text-gray-400 text-sm mb-1">📅 {{ booking.ticket.event.date|date:"d M Y" }}</p>
             <p class="text-gray-400 text-sm mb-1">📍 {{ booking.ticket.event.lokasi|default:"Lokasi belum ditentukan" }}</p>
-
-            <!-- Booking Detail -->
             <div class="mt-4 bg-gray-700/40 rounded-lg p-3">
               <p class="text-sm"><span class="font-medium text-blue-400">Quantity:</span> {{ booking.quantity }}</p>
               <p class="text-sm"><span class="font-medium text-blue-400">Total Harga:</span> Rp{{ booking.total_price|floatformat:0 }}</p>
               <p class="text-sm text-gray-400">📆 Dipesan: {{ booking.booked_at|date:"d M Y, H:i" }}</p>
             </div>
-
-            <!-- Footer -->
             <div class="mt-5 flex justify-between items-center">
               <a href="{% url 'event:event_detail' booking.ticket.event.id %}" 
                  class="bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition duration-200">
                 🔍 Lihat Event
               </a>
             </div>
-
           </div>
         {% endfor %}
       </div>
-    {% else %}
-      <!-- Kalau Belum Ada Booking -->
-      <div class="text-center py-20 bg-gray-800/40 rounded-xl border border-gray-700 shadow-inner">
-        <img src="{% static 'images/no-article-found.png' %}" 
-             alt="Tidak ada booking" 
-             class="mx-auto mb-6 w-40 h-40 opacity-70">
-        <p class="text-gray-300 text-lg font-semibold">Kamu belum pernah booking event apapun 😢</p>
-        <p class="text-gray-500 mt-2">Yuk, lihat event menarik dan pesan tiket sekarang!</p>
-        <a href="{% url 'event:home_event' %}"
-           class="mt-6 inline-block bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-transform duration-200 hover:scale-105">
-          🎫 Lihat Event
-        </a>
+    </div>
+
+    <!-- Template Hidden -->
+    <div id="booking-card-template" class="hidden">
+      <div class="booking-card bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-300 shadow-lg rounded-2xl p-6 border border-gray-700">
+        <div class="flex justify-between items-start mb-3">
+          <h2 class="text-xl font-semibold text-white event-title"></h2>
+          <span class="bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full">Joined</span>
+        </div>
+        <hr class="border-gray-700 my-3">
+        <p class="text-gray-400 text-sm mb-1 date"></p>
+        <p class="text-gray-400 text-sm mb-1 location"></p>
+        <div class="mt-4 bg-gray-700/40 rounded-lg p-3">
+          <p class="text-sm"><span class="font-medium text-blue-400">Quantity:</span> <span class="quantity"></span></p>
+          <p class="text-sm"><span class="font-medium text-blue-400">Total Harga:</span> Rp<span class="total-price"></span></p>
+          <p class="text-sm text-gray-400 booked-at"></p>
+        </div>
+        <div class="mt-5 flex justify-between items-center">
+          <a href="#" class="view-event bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow transition duration-200">
+            🔍 Lihat Event
+          </a>
+        </div>
       </div>
-    {% endif %}
+    </div>
+
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const refreshButton = document.getElementById('refresh-button');
+  const spinner = document.getElementById('loading-spinner');
+  const icon = document.getElementById('refresh-icon');
+  const refreshText = document.getElementById('refresh-text');
+  const bookingsContainer = document.getElementById('bookings-container');
+  const template = document.getElementById('booking-card-template').firstElementChild;
+  const globalToastContainer = document.getElementById('toast-container');
+
+  // Toast function
+  function showToast(message, type = 'info') {
+    if (!globalToastContainer) return;
+
+    const toastElement = document.createElement('div');
+    toastElement.className = `p-4 rounded-lg shadow-lg flex items-start space-x-3 text-sm font-medium toast-enter w-full`;
+
+    let bgColor = 'bg-blue-600';
+    let textColor = 'text-white';
+    let iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>`;
+    
+    if (type === 'success') {
+      bgColor = 'bg-green-600';
+      iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>`;
+    } else if (type === 'error') {
+      bgColor = 'bg-red-600';
+      iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>`;
+    } else if (type === 'warning') {
+      bgColor = 'bg-yellow-600';
+      iconSvg = `<svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>`;
+    }
+    
+    toastElement.classList.add(bgColor, textColor);
+
+    toastElement.innerHTML = `
+      <div class="flex-shrink-0">${iconSvg}</div>
+      <div class="flex-grow mr-2">${message}</div>
+      <div class="flex-shrink-0">
+        <button type="button" class="inline-flex rounded-md p-1 -m-1 focus:outline-none focus:ring-2 focus:ring-white opacity-70 hover:opacity-100 close-toast">
+          <span class="sr-only">Dismiss</span>
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    `;
+
+    const closeButton = toastElement.querySelector('.close-toast');
+    closeButton.addEventListener('click', () => removeToast(toastElement));
+
+    globalToastContainer.appendChild(toastElement);
+
+    requestAnimationFrame(() => {
+      toastElement.classList.remove('toast-enter');
+      toastElement.classList.add('toast-enter-active');
+    });
+
+    const autoCloseTimeout = setTimeout(() => removeToast(toastElement), 4000);
+
+    function removeToast(element) {
+      clearTimeout(autoCloseTimeout);
+      element.classList.remove('toast-enter-active');
+      element.classList.add('toast-exit-active');
+      element.addEventListener('transitionend', () => {
+        if (element.parentNode) element.parentNode.removeChild(element);
+      }, { once: true });
+    }
+  }
+
+  async function loadBookings(isRefresh = false) {
+    icon.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    refreshText.textContent = 'Memuat...';
+    refreshButton.disabled = true;
+    refreshButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+    try {
+      const response = await fetch("{% url 'ticketing:get_my_bookings_ajax' %}");
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+
+      const grid = bookingsContainer.querySelector('.grid') || (() => {
+        const g = document.createElement('div');
+        g.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8';
+        bookingsContainer.innerHTML = '';
+        bookingsContainer.appendChild(g);
+        return g;
+      })();
+
+      grid.innerHTML = '';
+
+      if (data.bookings.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-20 bg-gray-800/40 rounded-xl border border-gray-700 shadow-inner">
+            <img src="{% static 'images/no-article-found.png' %}" 
+                 alt="Tidak ada booking" 
+                 class="mx-auto mb-6 w-40 h-40 opacity-70">
+            <p class="text-gray-300 text-lg font-semibold">Kamu belum pernah booking event apapun 😢</p>
+            <p class="text-gray-500 mt-2">Yuk, lihat event menarik dan pesan tiket sekarang!</p>
+            <a href="{% url 'event:home_event' %}"
+               class="mt-6 inline-block bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-transform duration-200 hover:scale-105">
+              🎫 Lihat Event
+            </a>
+          </div>`;
+        
+        if (isRefresh) {
+          showToast('Belum ada booking yang ditemukan.', 'info');
+        }
+        return;
+      }
+
+      data.bookings.forEach(b => {
+        const card = template.cloneNode(true);
+        card.querySelector('.event-title').textContent = b.event_title;
+        card.querySelector('.date').textContent = `📅 ${b.date}`;
+        card.querySelector('.location').textContent = `📍 ${b.location}`;
+        card.querySelector('.quantity').textContent = b.quantity;
+        card.querySelector('.total-price').textContent = b.total_price.toLocaleString();
+        card.querySelector('.booked-at').textContent = `📆 Dipesan: ${b.booked_at}`;
+        card.querySelector('.view-event').href = b.event_url; 
+        grid.appendChild(card);
+      });
+
+      if (isRefresh) {
+        showToast(`🔄 ${data.bookings.length} booking berhasil dimuat!`, 'success');
+      }
+
+    } catch (err) {
+      console.error(err);
+      
+      const grid = bookingsContainer.querySelector('.grid') || bookingsContainer;
+      grid.innerHTML = `
+        <div class="col-span-full text-center py-12">
+          <p class="text-red-400 text-lg mb-2">❌ Gagal memuat booking</p>
+          <p class="text-gray-400 text-sm">Silakan coba lagi atau hubungi admin jika masalah berlanjut.</p>
+        </div>
+      `;
+      
+      if (isRefresh) {
+        showToast('❌ Gagal memuat booking. Silakan coba lagi.', 'error');
+      }
+    } finally {
+      spinner.classList.add('hidden');
+      icon.classList.remove('hidden');
+      refreshText.textContent = 'Refresh';
+      refreshButton.disabled = false;
+      refreshButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+
+  refreshButton.addEventListener('click', () => loadBookings(true));
+  
+  // Initial load tanpa toast
+  loadBookings(false);
+
+  // Check for success parameter in URL (dari booking berhasil)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('booking') === 'success') {
+    showToast('🎉 Booking berhasil! Tiket sudah masuk ke daftar kamu.', 'success');
+    // Remove parameter from URL
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+});
+</script>
+
 {% endblock %}
