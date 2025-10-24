@@ -131,37 +131,67 @@
       </div>
     </div>
 
-    <!-- TRENDING NEWS -->
+    <!-- SIDEBAR KANAN -->
     <aside class="w-full lg:w-1/5 self-start mt-20 lg:mt-[6.5rem]">
-      <h2 class="text-2xl font-bold text-white mb-6 text-center lg:text-left">
-        Lihat Lainnya
-      </h2>
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-white mb-6 text-center lg:text-left">
+                    Top Forum
+                </h2>
 
-      <div class="space-y-4">
-        {% for article in hottest_articles %}
-          <a href="{{ article.get_absolute_url }}" 
-             class="block bg-gray-800 rounded-lg shadow-md hover:shadow-xl overflow-hidden transform hover:scale-[1.02] transition">
-            <div class="h-32 overflow-hidden">
-              {% if article.thumbnail %}
-                <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
-                     class="w-full h-full object-cover transition duration-300 hover:scale-110">
-              {% else %}
-                <img src="{% static 'images/no-image-news.jpg' %}" alt="Tidak ada gambar"
-                     class="w-full h-full object-cover">
-              {% endif %}
+                <ol class="space-y-4 list-none p-0"> 
+                    {% for top_forum in top_forums %}
+                    <li class="group flex items-start text-white/90">
+                        <span class="mr-3 text-xl font-bold text-blue-400" 
+                            style="width: 25px;">
+                            #{{ forloop.counter }}
+                        </span>
+                        
+                        <a href="{% url 'forumdiskusi:forum' pk=top_forum.article.pk %}"
+                        class="block flex-1 text-gray-300 hover:text-blue-400 transition">
+                            
+                            <span class="font-semibold text-white group-hover:text-blue-400 leading-snug">
+                                {{ top_forum.article.title|truncatechars:70 }}
+                            </span>
+                            
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                {{ top_forum.post_count }} Komentar
+                            </p>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <p class="text-gray-400 text-center">Belum ada forum ramai.</p>
+                    {% endfor %}
+                </ol>
             </div>
-            <div class="p-3">
-              <h3 class="text-white font-semibold text-sm mb-1 hover:text-blue-400 transition">
-                {{ article.title|truncatechars:60 }}
-              </h3>
-              <p class="text-xs text-gray-400">by {{ article.author.username|default:"Unknown" }}</p>
+            <h2 class="text-2xl font-bold text-white mb-6 text-center lg:text-left">
+                Lihat Lainnya
+            </h2>
+
+            <div class="space-y-4">
+                {% for article in hottest_articles %}
+                <a href="{{ article.get_absolute_url }}" 
+                    class="block bg-gray-800 rounded-lg shadow-md hover:shadow-xl overflow-hidden transform hover:scale-[1.02] transition">
+                    <div class="h-32 overflow-hidden">
+                        {% if article.thumbnail %}
+                        <img src="{{ article.thumbnail }}" alt="{{ article.title }}" 
+                                class="w-full h-full object-cover transition duration-300 hover:scale-110">
+                        {% else %}
+                        <img src="{% static 'images/no-image-news.jpg' %}" alt="Tidak ada gambar"
+                                class="w-full h-full object-cover">
+                        {% endif %}
+                    </div>
+                    <div class="p-3">
+                        <h3 class="text-white font-semibold text-sm mb-1 hover:text-blue-400 transition">
+                            {{ article.title|truncatechars:60 }}
+                        </h3>
+                        <p class="text-xs text-gray-400">by {{ article.author.username|default:"Unknown" }}</p>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-gray-400 text-center">Tidak ada berita trending.</p>
+                {% endfor %}
             </div>
-          </a>
-        {% empty %}
-          <p class="text-gray-400 text-center">Tidak ada berita trending.</p>
-        {% endfor %}
-      </div>
-    </aside>
+        </aside>
 
     <!-- Modal Tambah Komentar -->
     <div id="commentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">

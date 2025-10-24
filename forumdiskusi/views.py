@@ -9,7 +9,18 @@ from news.models import Article
 def forum(request, pk):
     article = get_object_or_404(Article, pk=pk)
     forum, created = ForumDiskusi.objects.get_or_create(article=article)
-    comments = forum.posts.all().order_by('-score', '-created_at')
+    comments = (
+        forum.posts.all()
+        .order_by('-score', '-created_at')
+    )
+
+    top_forums = (
+        ForumDiskusi.objects
+        .annotate(post_count=Count('posts'))  # Hitung jumlah posts (komentar)
+        .filter(post_count__gt=0)             # Hanya tampilkan forum yang ada komentarnya
+        .select_related('article')            # Ambil data artikel terkait
+        .order_by('-post_count')[:3]          # Urutkan berdasarkan post_count (terbanyak) dan batasi 5
+    )
 
     user_votes = {}
     if request.user.is_authenticated:
@@ -18,7 +29,7 @@ def forum(request, pk):
 
     hottest_articles = (
         Article.objects.exclude(pk=article.pk)  # jangan tampilkan artikel yang sedang dibuka
-        .order_by('-news_views')[:6]  # atau '-created_at' jika tidak ada views
+        .order_by('-news_views')[:3]  # atau '-created_at' jika tidak ada views
     )
 
     for comment in comments:
@@ -29,6 +40,7 @@ def forum(request, pk):
         'news': article,
         'comments': comments,
         'hottest_articles': hottest_articles,
+        'top_forums': top_forums,
     }
     return render(request, 'forum.html', context)
 
