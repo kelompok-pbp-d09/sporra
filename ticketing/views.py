@@ -77,20 +77,41 @@ def my_bookings(request):
     return render(request, "my_bookings.html", {"bookings": bookings})
 
 def all_tickets(request):
-        tickets = Ticket.objects.select_related('event').all()
-        return render(request, "all_tickets.html", {"tickets": tickets})
-
+    tickets = Ticket.objects.select_related('event').all()
+    
+    # Tentukan event yang bisa dipilih untuk membuat tiket
+    if request.user.is_authenticated:
+        try:
+            if request.user.userprofile.is_admin:
+                events = Event.objects.all()  # Admin bisa pilih semua event
+            else:
+                events = request.user.event_set.all()  # User biasa hanya eventnya sendiri
+        except:
+            events = request.user.event_set.all()
+    else:
+        events = Event.objects.none()
+    
+    return render(request, "all_tickets.html", {
+        "tickets": tickets,
+        "events": events  # ← Kirim ke template
+    })
+    
 def get_tickets_ajax(request):
     tickets = Ticket.objects.select_related('event').all()
     data = []
+
+    # Cek aman user profile
+    is_admin = False
+    if request.user.is_authenticated:
+        profile = getattr(request.user, 'userprofile', None)
+        is_admin = getattr(profile, 'is_admin', False)
+
     for t in tickets:
-        can_edit = False
-        if request.user.is_authenticated:
-            try:
-                can_edit = request.user == t.event.user or request.user.userprofile.is_admin
-            except:
-                can_edit = request.user == t.event.user
-        
+        can_edit = (
+            request.user.is_authenticated and
+            (is_admin or request.user == t.event.user)
+        )
+
         data.append({
             "id": t.id,
             "event_title": t.event.judul,
@@ -100,6 +121,7 @@ def get_tickets_ajax(request):
             "event_id": t.event.id,
             "can_edit": can_edit,
         })
+
     return JsonResponse({"tickets": data})
 
 @login_required
@@ -147,7 +169,6 @@ def create_ticket(request):
             }
         })
 
-
 @login_required
 def get_my_bookings_ajax(request):
     bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
@@ -162,7 +183,7 @@ def get_my_bookings_ajax(request):
             "quantity": b.quantity,
             "total_price": int(b.total_price),
             "booked_at": b.booked_at.strftime("%d %b %Y, %H:%M") if b.booked_at else "-",
-            "event_url": reverse('event:event_detail', args=[b.ticket.event.id])  # ← TAMBAHKAN BARIS INI
+            "event_url": reverse('event:event_detail', args=[b.ticket.event.id])
         })
 
     return JsonResponse({"bookings": data})
