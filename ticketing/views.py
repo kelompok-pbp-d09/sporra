@@ -1,36 +1,36 @@
+import json
+from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt  # <--- WAJIB untuk API Mobile
 from django.http import JsonResponse
 from django.contrib import messages
+from django.urls import reverse
+from django.db import IntegrityError
+
 from .models import Ticket, Booking
 from .forms import TicketSelectionForm
 from event.models import Event
-from django.urls import reverse
-from django.db import IntegrityError
-import json
-from decimal import Decimal
 
+# ==============================================================================
+#  BAGIAN 1: BOOKING TICKET (User Membeli Tiket)
+# ==============================================================================
 
+@csrf_exempt  
 @login_required
 def book_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
-
     if request.method == 'POST':
         
-        if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            messages.error(request, "Metode tidak diizinkan.")
-            # Redirect ke detail event jika ada yang coba POST non-AJAX
-            return redirect('event:event_detail', event_id=event.id)
-
+        # Masukkan data POST ke form
         form = TicketSelectionForm(request.POST, event=event)
 
         if form.is_valid():
             ticket = form.cleaned_data['ticket']
             quantity = form.cleaned_data['quantity']
             
-            
-            # ✅ Batasi jumlah tiket
+            # 1. Batasi jumlah tiket per transaksi
             MAX_TICKET_QUANTITY = 500
             if quantity > MAX_TICKET_QUANTITY:
                 return JsonResponse({
@@ -38,62 +38,99 @@ def book_ticket(request, event_id):
                     'message': f'Maksimal {MAX_TICKET_QUANTITY} tiket per order.'
                 })
 
-
-            # ✅ Validasi stok (langsung return JSON untuk toast)
+            # 2. Validasi input dasar
             if quantity <= 0:
                 return JsonResponse({'status': 'error', 'message': "Jumlah tiket harus lebih dari 0."})
 
+            # 3. Validasi stok tiket
             if quantity > ticket.available:
                 msg = f"Stok tiket {ticket.get_ticket_type_display()} hanya {ticket.available} tersisa."
                 return JsonResponse({'status': 'error', 'message': msg})
 
-            # ✅ Lanjut pembuatan booking
+            # 4. Proses Booking (Get or Create)
             booking, created = Booking.objects.get_or_create(
                 user=request.user,
                 ticket=ticket,
                 defaults={'quantity': 0, 'total_price': Decimal("0.00")}
             )
 
+            # Update booking yang ada
             booking.quantity += quantity
             booking.total_price = Decimal(ticket.price) * booking.quantity
             booking.save()
 
+            # Kurangi stok tiket
             ticket.available -= quantity
             ticket.save()
 
             msg = "Tiket berhasil dipesan! Terimakasih!"
-            # Kirim JSON sukses kembali ke modal
+            
+            # Return JSON sukses
             return JsonResponse({
                 'status': 'success',
                 'message': msg,
-                'redirect_url': reverse('event:home_event') # URL ini dari kode asli Anda
+                'redirect_url': reverse('event:home_event') 
             })
 
-        # ❌ Form tidak valid (langsung return JSON untuk toast)
+        # Jika Form Tidak Valid
         else:
-            # Ambil pesan error pertama dari form untuk ditampilkan
             try:
+                # Ambil pesan error pertama
                 error_msg = form.errors.as_data().popitem()[1][0].message
             except:
                 error_msg = "Form tidak valid. Silakan pilih tiket."
                 
             return JsonResponse({'status': 'error', 'message': error_msg})
 
+    # Jika GET (akses lewat browser langsung), redirect ke detail event
     messages.info(request, "Silakan pesan tiket langsung dari halaman event.")
     return redirect('event:event_detail', id=event.id)
 
+
+# ==============================================================================
+#  BAGIAN 2: MENAMPILKAN TIKET MILIK USER (My Bookings)
+# ==============================================================================
+
+# Versi HTML (Untuk Web Django)
 @login_required
 def my_bookings(request):
     bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
     return render(request, "my_bookings.html", {"bookings": bookings})
 
+# Versi JSON (Untuk Flutter / API)
+@login_required
+def get_my_bookings_ajax(request):
+    bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
+    
+    data = []
+    for b in bookings:
+        data.append({
+            "id": b.id, # Penting untuk referensi
+            "event_id": b.ticket.event.id,
+            "event_title": b.ticket.event.judul,
+            "date": b.ticket.event.date.strftime("%d %b %Y") if b.ticket.event.date else "-",
+            "location": b.ticket.event.lokasi or "Lokasi belum ditentukan",
+            "quantity": b.quantity,
+            "total_price": int(b.total_price),
+            "ticket_type": b.ticket.get_ticket_type_display(),
+            "booked_at": b.booked_at.strftime("%d %b %Y, %H:%M") if b.booked_at else "-",
+            "event_url": reverse('event:event_detail', args=[b.ticket.event.id])
+        })
 
+    return JsonResponse({"bookings": data})
+
+
+# ==============================================================================
+#  BAGIAN 3: MELIHAT SEMUA TIKET (Web & API)
+# ==============================================================================
+
+# Versi HTML (Untuk Web Django)
 def all_tickets(request):
     tickets = Ticket.objects.select_related('event').all()
 
     if request.user.is_authenticated:
         try:
-            if request.user.userprofile.is_admin:
+            if getattr(request.user, 'userprofile', None) and request.user.userprofile.is_admin:
                 events = Event.objects.all()
             else:
                 events = request.user.event_set.all()
@@ -107,15 +144,14 @@ def all_tickets(request):
         "events": events
     })
 
-
+# Versi JSON (Untuk Flutter / API)
 def get_tickets_ajax(request):
     tickets = Ticket.objects.select_related('event').all()
     data = []
 
-    is_admin = (
-        request.user.is_authenticated 
-        and getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
-    )
+    is_admin = False
+    if request.user.is_authenticated:
+        is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
 
     for t in tickets:
         data.append({
@@ -125,12 +161,18 @@ def get_tickets_ajax(request):
             "price": float(t.price),
             "available": t.available,
             "event_id": t.event.id,
+            # Cek apakah user boleh edit (Admin atau Pemilik Event)
             "can_edit": request.user.is_authenticated and (is_admin or request.user == t.event.user),
         })
 
     return JsonResponse({"tickets": data})
 
 
+# ==============================================================================
+#  BAGIAN 4: CRUD TIKET (Create, Update, Delete)
+# ==============================================================================
+
+@csrf_exempt
 @login_required
 def create_ticket(request):
     if request.method == 'POST':
@@ -147,21 +189,24 @@ def create_ticket(request):
         if not all([event_id, ticket_type, price, available]):
             return JsonResponse({'error': 'Missing fields'}, status=400)
 
+        # Cek permission: Apakah User adalah pemilik event atau Admin?
         try:
-            if request.user.userprofile.is_admin:
+            is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
+            if is_admin:
                 event = Event.objects.get(id=event_id)
             else:
                 event = Event.objects.get(id=event_id, user=request.user)
         except Event.DoesNotExist:
             return JsonResponse({'error': 'Event not found or forbidden'}, status=403)
 
-        # ===== Pengecekan tipe tiket duplikat =====
+        # Cek duplikasi tipe tiket
         if Ticket.objects.filter(event=event, ticket_type=ticket_type).exists():
             return JsonResponse({
-                'success': False,
+                'success': False, 
                 'error': f"Tiket '{ticket_type}' untuk event ini sudah ada!"
             }, status=400)
 
+        # Buat Tiket Baru
         ticket = Ticket.objects.create(
             event=event,
             ticket_type=ticket_type,
@@ -181,33 +226,18 @@ def create_ticket(request):
                 'can_edit': True
             }
         })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@login_required
-def get_my_bookings_ajax(request):
-    bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
-    data = [
-        {
-            "event_id": b.ticket.event.id,
-            "event_title": b.ticket.event.judul,
-            "date": b.ticket.event.date.strftime("%d %b %Y") if b.ticket.event.date else "-",
-            "location": b.ticket.event.lokasi or "Lokasi belum ditentukan",
-            "quantity": b.quantity,
-            "total_price": int(b.total_price),
-            "booked_at": b.booked_at.strftime("%d %b %Y, %H:%M") if b.booked_at else "-",
-            "event_url": reverse('event:event_detail', args=[b.ticket.event.id])
-        }
-        for b in bookings
-    ]
-
-    return JsonResponse({"bookings": data})
-
-
+@csrf_exempt
 @login_required
 def edit_ticket_ajax(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
 
-    if not (request.user == ticket.event.user or request.user.userprofile.is_admin):
+    # Cek Permission
+    is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
+    if not (request.user == ticket.event.user or is_admin):
         return JsonResponse({'error': 'Forbidden'}, status=403)
 
     if request.method == 'POST':
@@ -223,12 +253,17 @@ def edit_ticket_ajax(request, ticket_id):
 
         return JsonResponse({'success': True})
 
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+
+@csrf_exempt
 @login_required
 def delete_ticket_ajax(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
 
-    if not (request.user == ticket.event.user or request.user.userprofile.is_admin):
+    # Cek Permission
+    is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
+    if not (request.user == ticket.event.user or is_admin):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     if request.method == "POST":
