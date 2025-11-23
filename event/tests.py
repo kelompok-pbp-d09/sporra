@@ -331,6 +331,19 @@ class EventFormTest(TestCase):
             form = EventForm(data=form_data)
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data['judul'], expected_output)
+            
+            
+    def test_clean_judul_empty_after_stripping(self):
+        form_data = {
+            'judul': '<div></div>',
+            'deskripsi': 'Test',
+            'date': '12 Juli 2025 15.00',
+            'lokasi': 'Test',
+            'kategori': 'basket'
+        }
+        form = EventForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('judul', form.errors)
     
     def test_clean_deskripsi_strips_tags(self):
         form_data = {
@@ -345,6 +358,19 @@ class EventFormTest(TestCase):
         self.assertEqual(form.cleaned_data['deskripsi'], 'Bold description with italic text')
         self.assertNotIn('<b>', form.cleaned_data['deskripsi'])
         self.assertNotIn('<i>', form.cleaned_data['deskripsi'])
+        
+    def test_clean_deskripsi_prevents_xss(self):
+        form_data = {
+            'judul': 'Test',
+            'deskripsi': '<script>alert("XSS")</script>Safe description',
+            'date': '12 Juli 2025 15.00',
+            'lokasi': 'Test',
+            'kategori': 'basket'
+        }
+        form = EventForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['deskripsi'], 'Safe description')
+        self.assertNotIn('<script>', form.cleaned_data['deskripsi'])
         
     def test_form_missing_required(self):
         required_fields = ['judul', 'deskripsi', 'date', 'lokasi', 'kategori']
@@ -617,6 +643,10 @@ class EventViewsTest(TestCase):
         fake_id = uuid.uuid4()
         response = self.client.get(reverse('event:event_detail', args=[fake_id]))
         self.assertEqual(response.status_code, 404)
+    
+    def test_event_detail_ended_future_event(self):
+        response = self.client.get(reverse('event:event_detail', args=[self.future_event.id]))
+        self.assertFalse(response.context['has_ended'])
     
     # create event
     def test_create_event_get_request(self):
