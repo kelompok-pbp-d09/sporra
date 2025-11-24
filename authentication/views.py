@@ -1,8 +1,13 @@
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from .models import UserProfile
+import json
 
 @csrf_exempt
 def login(request):
@@ -32,3 +37,64 @@ def login(request):
         }, status=401)
 
 # Create your views here.
+@csrf_exempt
+def register(request):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({"status": False, "message": "Invalid JSON"}, status=400)
+
+    username = data.get('username')
+    full_name = data.get('full_name')
+    phone = data.get('phone')
+    password1 = data.get('password1')
+    password2 = data.get('password2')
+
+    if not username or not full_name or not phone or not password1 or not password2:
+        return JsonResponse({"status": False, "message": "Semua harus terpenuhi"}, status=400)
+
+    if password1 != password2:
+        return JsonResponse({"status": False, "message": "Passwords tidak cocok"}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"status": False, "message": "Username sudah ada"}, status=400)
+
+    try:
+        validate_password(password1)
+    except ValidationError as e:
+        return JsonResponse({"status": False, "message": list(e.messages)}, status=400)
+
+    # Buat user
+    user = User.objects.create_user(username=username, password=password1)
+
+    # Buat profile
+    UserProfile.objects.create(user=user, full_name=full_name, phone=phone)
+
+    auth_login(request, user)
+
+    return JsonResponse({
+        "status": True,
+        "message": f"Akun {username} berhasil dibuat!",
+        "username": username
+    }, status=200)
+
+    
+@csrf_exempt
+def logout(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": False,
+            "message": "User not logged in."
+        }, status=400)
+
+    username = request.user.username
+    auth_logout(request)
+
+    return JsonResponse({
+        "status": True,
+        "message": "Kamu telah berhasil logout",
+        "username": username,
+    }, status=200)
