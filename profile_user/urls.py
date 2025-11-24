@@ -6,7 +6,7 @@ from . import views
 app_name = 'profile_user'
 
 urlpatterns = [
-    path('',show_profile,name='show_profile'),
+    path('',show_profile,name='show_profile'),  
     path('register/', register_user, name='register'),
     path('login/', login_user, name='login'),
     path('logout/', logout_user, name='logout'),
@@ -16,4 +16,5 @@ urlpatterns = [
     path('edit_status/<int:status_id>/', edit_status, name='edit_status'),  
     path('<str:username>/', views.show_profile, name='show_profile'),
     path('login_flutter/', login_flutter, name='login_flutter'),
+    path('register_flutter/', register_flutter, name='register_flutter'),
 ]

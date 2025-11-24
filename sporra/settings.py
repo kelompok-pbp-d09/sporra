@@ -34,7 +34,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "afero-aqil-sporra.pbp.cs.ui.ac.id","10.0.2.2"]
 
-CSRF_TRUSTED_ORIGINS = ['https://afero-aqil-sporra.pbp.cs.ui.ac.id']
+CSRF_TRUSTED_ORIGINS = ['https://afero-aqil-sporra.pbp.cs.ui.ac.id','http://localhost', 'http://127.0.0.1',]
 
 # Application definition
 
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'forumdiskusi',
     'ticketing',
     'corsheaders',
+    'authentication'
 ]
 
 MIDDLEWARE = [
@@ -71,7 +72,6 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
-
 
 ROOT_URLCONF = 'sporra.urls'
 
