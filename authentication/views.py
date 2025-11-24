@@ -62,15 +62,16 @@ def register(request):
     if User.objects.filter(username=username).exists():
         return JsonResponse({"status": False, "message": "Username sudah ada"}, status=400)
 
+    if UserProfile.objects.filter(phone=phone).exists():
+        return JsonResponse({"status": False, "message": "Nomor telepon sudah digunakan"}, status=400)
+
     try:
         validate_password(password1)
     except ValidationError as e:
         return JsonResponse({"status": False, "message": list(e.messages)}, status=400)
 
-    # Buat user
     user = User.objects.create_user(username=username, password=password1)
 
-    # Buat profile
     UserProfile.objects.create(user=user, full_name=full_name, phone=phone)
 
     auth_login(request, user)
