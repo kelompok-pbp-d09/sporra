@@ -11,9 +11,11 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Article
 from django.template.loader import render_to_string
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+import requests
+from django.core import serializers
 
 
 # --- View Landing page ---
@@ -27,7 +29,6 @@ class LandingPageView(TemplateView):
 
 
 # --- READ Views ---
-
 class ArticleListView(ListView):
     model = Article
     template_name = 'news/article_list.html' 
@@ -47,14 +48,11 @@ class ArticleListView(ListView):
         context['current_category'] = self.request.GET.get('category')
         return context
 
-    # --- TAMBAHKAN ATAU MODIFIKASI METHOD GET INI ---
     def get(self, request, *args, **kwargs):
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('ajax') == 'true'
 
         if is_ajax:
-
             self.object_list = self.get_queryset()
-
             paginator = self.get_paginator(self.object_list, self.paginate_by)
             page_obj = paginator.get_page(1)
             
@@ -62,7 +60,6 @@ class ArticleListView(ListView):
                 'articles': page_obj.object_list,
                 'page_obj': page_obj, 
                 'is_paginated': page_obj.has_other_pages(),
-
             }
 
             html = render_to_string(
@@ -83,11 +80,10 @@ class ArticleDetailView(DetailView):
     def get_object(self, queryset=None):
         article = super().get_object(queryset)
         article.increment_views()
-        
         return article
 
-# --- CREATE View ---
 
+# --- CREATE View ---
 class ArticleCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     model = Article
     template_name = 'news/article_form.html'
@@ -101,7 +97,6 @@ class ArticleCreateView(SuccessMessageMixin, LoginRequiredMixin, CreateView):
 
 
 # --- UPDATE View ---
-
 class ArticleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Article
     template_name = 'news/article_form.html'
@@ -112,7 +107,6 @@ class ArticleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestM
         if form.has_changed():
             self.object = form.save()
             messages.success(self.request, f"Artikel '{self.object.title}' berhasil diperbarui!")
-
             return HttpResponseRedirect(self.get_success_url()) 
         else:
             messages.info(self.request, "Tidak ada perubahan yang disimpan.")
@@ -124,23 +118,46 @@ class ArticleUpdateView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestM
 
 
 # --- DELETE View ---
-
 class ArticleDeleteView(SuccessMessageMixin, LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Article
     template_name = 'news/article_confirm_delete.html'
     success_url = reverse_lazy('news:article-list')
 
     def post(self, request, *args, **kwargs):
-
         self.object = self.get_object()
         title_to_delete = self.object.title 
-
         response = super().post(request, *args, **kwargs) 
-        
         messages.error(self.request, f"Artikel '{title_to_delete}' berhasil dihapus!") 
-        
         return response
 
     def test_func(self):
         article = self.get_object()
         return self.request.user == article.author or self.request.user.is_superuser
+
+
+def proxy_image(request):
+    image_url = request.GET.get('url')
+    if not image_url:
+        return HttpResponse('No URL provided', status=400)
+    
+    try:
+        # Fetch image from external source
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+        
+        # Return the image with proper content type
+        return HttpResponse(
+            response.content,
+            content_type=response.headers.get('Content-Type', 'image/jpeg')
+        )
+    except requests.RequestException as e:
+        return HttpResponse(f'Error fetching image: {str(e)}', status=500)
+    
+def show_json(request):
+    data = Article.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+
+def show_json_by_id(request, id):
+    data = Article.objects.filter(pk=id)
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    

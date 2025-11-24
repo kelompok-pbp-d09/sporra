@@ -13,4 +13,9 @@ urlpatterns = [
     path('<uuid:pk>/edit/', views.ArticleUpdateView.as_view(), name='article-update'),
     
     path('<uuid:pk>/delete/', views.ArticleDeleteView.as_view(), name='article-delete'),
+    
+    path('proxy-image/', views.proxy_image, name='proxy_image'),
+    
+    path('json/', views.show_json, name='show_json'), 
+    path('json/<str:id>/', views.show_json_by_id, name='show_json_by_id'),
 ]
