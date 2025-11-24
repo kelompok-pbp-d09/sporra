@@ -12,3 +12,4 @@ coverage
 pytz
 selenium
 django.utils.six
+django-cors-headers

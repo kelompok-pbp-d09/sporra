@@ -15,4 +15,5 @@ urlpatterns = [
     path('delete_status/<int:status_id>/', delete_status, name='delete_status'),
     path('edit_status/<int:status_id>/', edit_status, name='edit_status'),  
     path('<str:username>/', views.show_profile, name='show_profile'),
+    path('login_flutter/', login_flutter, name='login_flutter'),
 ]
