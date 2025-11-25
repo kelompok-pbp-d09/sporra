@@ -66,5 +66,5 @@ Dengan sistem ini, Spora menjadi wadah komunitas olahraga yang aktif, interaktif
 
 * Link Deployment PWS: [https://afero-aqil-sporra.pbp.cs.ui.ac.id/](https://afero-aqil-sporra.pbp.cs.ui.ac.id/)
 * Link Dataset: Hasil scraping dari [Dataset](https://www.cnnindonesia.com/olahraga/indeks/7)  
-* Link Design: [Design](https://www.figma.com/design/r4boFdf6YhGvcHUERt42sv/Untitled?t=PiXpt7W3ahZCbsR6-1)
+* Link Design: [Design](https://www.figma.com/design/kZpLlZVnWPINsl4yttEgwk/SPORRA?node-id=0-1&t=xOiFojctm5UpMtff-1)
 
