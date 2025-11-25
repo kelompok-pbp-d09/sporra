@@ -7,7 +7,10 @@ from django.template.defaultfilters import date as date_filter
 from event.models import Event
 from event.forms import EventForm
 from ticketing.models import Ticket
+from django.contrib.auth.decorators import login_required
+import json
 
+@login_required
 def home_event(request):
     current_time = timezone.localtime(timezone.now())
     category = request.GET.get("category")

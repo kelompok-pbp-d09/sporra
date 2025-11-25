@@ -10,7 +10,7 @@ class UserProfile(models.Model):
         ('user', 'User'),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='web_profile')
     full_name = models.CharField(max_length=100)
     bio = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)

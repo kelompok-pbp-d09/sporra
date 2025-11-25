@@ -11,4 +11,5 @@ urlpatterns = [
     path('event/<str:id>/delete/', delete_event, name='delete_event'),
     path('ajax/get-event/<uuid:id>/', get_event_ajax, name='get_event_ajax'),
     path('ajax/get-events/', get_events_ajax, name='get_events_ajax'),
+    path('json/', get_events_ajax, name='event_json'),
 ]
