@@ -5,8 +5,8 @@ app_name = 'profile_user'
 
 urlpatterns = [
     path('',show_profile,name='show_profile'),  
-    path('<str:username>/', views.show_profile, name='show_profile'),
-    path('<int:id>/', views.show_profile, name='show_profile'),
+    path('<str:username>/', show_profile, name='show_profile'),
+    path('<int:id>/', show_profile, name='show_profile'),
     path('register/', register_user, name='register'),
     path('login/', login_user, name='login'),
     path('logout/', logout_user, name='logout'),
