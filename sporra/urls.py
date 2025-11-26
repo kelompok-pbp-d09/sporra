@@ -17,7 +17,6 @@ urlpatterns = [
     path('event/', include('event.urls')),
     path('ticketing/',include('ticketing.urls')),
     path('forum/', include('forumdiskusi.urls')),
-    path('auth/', include('authentication.urls')),
     
 ]
 if settings.DEBUG:

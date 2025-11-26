@@ -15,7 +15,7 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.URLField(blank=True, null=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  #Role field 
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
 
 
     def __str__(self):

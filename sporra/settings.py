@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'forumdiskusi',
     'ticketing',
     'corsheaders',
-    'authentication'
 ]
 
 MIDDLEWARE = [

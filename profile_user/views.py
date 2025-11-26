@@ -3,17 +3,16 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from .forms import *
 from .models import UserProfile
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Status
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.shortcuts import render
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 import json
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 
 @login_required
 def show_profile(request, username=None):
@@ -150,83 +149,6 @@ def edit_status(request, status_id):
 
     return JsonResponse({'success': True, 'new_content': status.content})
 
-@csrf_exempt
-def register_flutter(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            "status": False,
-            "message": "Invalid request"
-        }, status=400)
-
-    username = request.POST.get('username')
-    full_name = request.POST.get('full_name')
-    phone = request.POST.get('phone')
-    password1 = request.POST.get('password1')
-    password2 = request.POST.get('password2')
-
-    if not username or not full_name or not phone or not password1 or not password2:
-        return JsonResponse({
-            "status": False,
-            "message": "Semua harus terpenuhi"
-        }, status=400)
-
-    if password1 != password2:
-        return JsonResponse({
-            "status": False,
-            "message": "Passwords tidak cocok"
-        }, status=400)
-
-    if User.objects.filter(username=username).exists():
-        return JsonResponse({
-            "status": False,
-            "message": "Username sudah ada"
-        }, status=400)
-
-    try:
-        validate_password(password1)
-    except ValidationError as e:
-        return JsonResponse({
-            "status": False,
-            "message": list(e.messages),
-        }, status=400)
-
-    # Buat user
-    user = User.objects.create_user(
-        username=username,
-        password=password1,
-    )
-
-    # Buat profile
-    UserProfile.objects.create(
-        user=user,
-        full_name=full_name,
-        phone=phone,
-    )
-
-    auth_login(request, user)
-
-    return JsonResponse({
-        "status": True,
-        "message": f"Akun {username} berhasil dibuat! Selamat datang!",
-        "username": username,
-    }, status=200)
-    
-@csrf_exempt
-def logout_flutter(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            "status": False,
-            "message": "User not logged in."
-        }, status=400)
-
-    username = request.user.username
-    auth_logout(request)
-
-    return JsonResponse({
-        "status": True,
-        "message": "Kamu telah berhasil logout",
-        "username": username,
-    }, status=200)
 
 @csrf_exempt
 def login_flutter(request):
@@ -254,3 +176,77 @@ def login_flutter(request):
             "status": False,
             "message": "Login failed, please check your username or password."
         }, status=401)
+
+# Create your views here.
+@csrf_exempt
+def register_flutter(request):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+    data = {}
+
+    # JSON
+    if request.content_type == "application/json":
+        try:
+            body = request.body.decode("utf-8")
+            if body.strip():
+                data = json.loads(body)
+        except:
+            pass
+
+    # Cookie Req
+    if not data:
+        if request.POST:
+            data = request.POST.dict()
+
+    if not data:
+        return JsonResponse({
+            "status": False,
+            "message": "Request body kosong atau tidak valid."
+        }, status=400)
+
+    username = data.get('username')
+    full_name = data.get('full_name')
+    phone = data.get('phone')
+    password1 = data.get('password1')
+    password2 = data.get('password2')
+
+    if not username or not full_name or not phone or not password1 or not password2:
+        return JsonResponse({"status": False, "message": "Semua field harus diisi"}, status=400)
+
+    if password1 != password2:
+        return JsonResponse({"status": False, "message": "Password tidak cocok"}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"status": False, "message": "Username sudah terpakai"}, status=400)
+
+    if UserProfile.objects.filter(phone=phone).exists():
+        return JsonResponse({"status": False, "message": "Nomor telepon sudah digunakan"}, status=400)
+
+    user = User.objects.create_user(username=username, password=password1)
+    UserProfile.objects.create(user=user, full_name=full_name, phone=phone)
+
+    auth_login(request, user)
+
+    return JsonResponse({
+        "status": True,
+        "message": f"Akun {username} berhasil dibuat!",
+        "username": username
+    }, status=200)
+    
+@csrf_exempt
+def logout_flutter(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": False,
+            "message": "User not logged in."
+        }, status=400)
+
+    username = request.user.username
+    auth_logout(request)
+
+    return JsonResponse({
+        "status": True,
+        "message": "Kamu telah berhasil logout",
+        "username": username,
+    }, status=200)
