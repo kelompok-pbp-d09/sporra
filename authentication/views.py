@@ -42,10 +42,27 @@ def register(request):
     if request.method != 'POST':
         return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
 
-    try:
-        data = json.loads(request.body)
-    except:
-        return JsonResponse({"status": False, "message": "Invalid JSON"}, status=400)
+    data = {}
+
+    # JSON
+    if request.content_type == "application/json":
+        try:
+            body = request.body.decode("utf-8")
+            if body.strip():
+                data = json.loads(body)
+        except:
+            pass
+
+    # Cookie Req
+    if not data:
+        if request.POST:
+            data = request.POST.dict()
+
+    if not data:
+        return JsonResponse({
+            "status": False,
+            "message": "Request body kosong atau tidak valid."
+        }, status=400)
 
     username = data.get('username')
     full_name = data.get('full_name')
@@ -54,24 +71,18 @@ def register(request):
     password2 = data.get('password2')
 
     if not username or not full_name or not phone or not password1 or not password2:
-        return JsonResponse({"status": False, "message": "Semua harus terpenuhi"}, status=400)
+        return JsonResponse({"status": False, "message": "Semua field harus diisi"}, status=400)
 
     if password1 != password2:
-        return JsonResponse({"status": False, "message": "Passwords tidak cocok"}, status=400)
+        return JsonResponse({"status": False, "message": "Password tidak cocok"}, status=400)
 
     if User.objects.filter(username=username).exists():
-        return JsonResponse({"status": False, "message": "Username sudah ada"}, status=400)
+        return JsonResponse({"status": False, "message": "Username sudah terpakai"}, status=400)
 
     if UserProfile.objects.filter(phone=phone).exists():
         return JsonResponse({"status": False, "message": "Nomor telepon sudah digunakan"}, status=400)
 
-    try:
-        validate_password(password1)
-    except ValidationError as e:
-        return JsonResponse({"status": False, "message": list(e.messages)}, status=400)
-
     user = User.objects.create_user(username=username, password=password1)
-
     UserProfile.objects.create(user=user, full_name=full_name, phone=phone)
 
     auth_login(request, user)
@@ -81,7 +92,6 @@ def register(request):
         "message": f"Akun {username} berhasil dibuat!",
         "username": username
     }, status=200)
-
     
 @csrf_exempt
 def logout(request):
