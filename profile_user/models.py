@@ -10,12 +10,12 @@ class UserProfile(models.Model):
         ('user', 'User'),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='web_profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
     bio = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.URLField(blank=True, null=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')  #Role field 
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
 
 
     def __str__(self):
