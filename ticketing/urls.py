@@ -23,9 +23,7 @@ urlpatterns = [
     # 4. Create Ticket (POST)
     path('create/', views.create_ticket, name='create_ticket'),
 
-    # 5. Edit Ticket (POST)
-    path('edit/<int:ticket_id>/', views.edit_ticket_ajax, name='edit_ticket_ajax'),
-    
-    # 6. Delete Ticket (POST)
-    path('delete/<int:ticket_id>/', views.delete_ticket_ajax, name='delete_ticket_ajax'),
+path('edit_ticket_ajax/<int:ticket_id>/', views.edit_ticket_ajax, name='edit_ticket_ajax'),
+path('delete_ticket_ajax/<int:ticket_id>/', views.delete_ticket_ajax, name='delete_ticket_ajax'),
+
 ]

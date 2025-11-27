@@ -17,7 +17,6 @@ from event.models import Event
 # ==============================================================================
 
 @csrf_exempt  
-@login_required
 def book_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
