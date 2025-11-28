@@ -155,9 +155,45 @@ def proxy_image(request):
     
 def show_json(request):
     data = Article.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    
+    list_articles = []
+    for item in data:
+        list_articles.append({
+            "model": "news.article",
+            "pk": str(item.pk),
+            "fields": {
+                "title": item.title,
+                "content": item.content,
+                "thumbnail": item.thumbnail,
+                "category": item.category,
+                
+            
+                "author": item.author.username if item.author else "Anonymous",
+                
+                "news_views": item.news_views,
+                "created_at": item.created_at.isoformat(), 
+            }
+        })
+        
+    return JsonResponse(list_articles, safe=False)
 
 def show_json_by_id(request, id):
     data = Article.objects.filter(pk=id)
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
     
+    list_articles = []
+    for item in data:
+        list_articles.append({
+            "model": "news.article",
+            "pk": str(item.pk),
+            "fields": {
+                "title": item.title,
+                "content": item.content,
+                "thumbnail": item.thumbnail,
+                "category": item.category,
+                "author": item.author.username if item.author else "Anonymous", 
+                "news_views": item.news_views,
+                "created_at": item.created_at.isoformat(),
+            }
+        })
+        
+    return JsonResponse(list_articles, safe=False)
