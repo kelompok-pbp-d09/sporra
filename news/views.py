@@ -158,11 +158,14 @@ def show_json(request):
     list_articles = []
     
     for item in data:
+        pfp_url = ""
         try:
-            pfp_url = item.author.profile.profile_picture.url # Ganti sesuai model kamu
-        except:
-            pfp_url = "" 
-
+            if hasattr(item.author, 'profile') and item.author.profile.image:
+                pfp_url = item.author.profile.image.url
+            
+        except Exception as e:
+            print(f"Error ambil PFP untuk user {item.author}: {e}")
+            pfp_url = ""
         list_articles.append({
             "model": "news.article",
             "pk": str(item.pk),
