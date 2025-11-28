@@ -155,9 +155,14 @@ def proxy_image(request):
     
 def show_json(request):
     data = Article.objects.all()
-    
     list_articles = []
+    
     for item in data:
+        try:
+            pfp_url = item.author.profile.profile_picture.url # Ganti sesuai model kamu
+        except:
+            pfp_url = "" 
+
         list_articles.append({
             "model": "news.article",
             "pk": str(item.pk),
@@ -166,15 +171,14 @@ def show_json(request):
                 "content": item.content,
                 "thumbnail": item.thumbnail,
                 "category": item.category,
-                
-            
                 "author": item.author.username if item.author else "Anonymous",
                 
+                "author_pfp": pfp_url, 
+                
                 "news_views": item.news_views,
-                "created_at": item.created_at.isoformat(), 
+                "created_at": item.created_at.isoformat(),
             }
         })
-        
     return JsonResponse(list_articles, safe=False)
 
 def show_json_by_id(request, id):
