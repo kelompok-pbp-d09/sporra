@@ -16,6 +16,8 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 import requests
 from django.core import serializers
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 # --- View Landing page ---
@@ -201,3 +203,51 @@ def show_json_by_id(request, id):
         })
         
     return JsonResponse(list_articles, safe=False)
+
+# Flutter Functions
+
+@csrf_exempt
+def delete_article_flutter(request, id):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+    
+    try:
+        # Menggunakan pk atau id, sesuaikan dengan definisi model kamu
+        article = Article.objects.get(pk=id) 
+        
+        # Cek permission: Harus Author atau Admin
+        if request.user == article.author or request.user.is_superuser:
+            article.delete()
+            return JsonResponse({"status": True, "message": "Berita berhasil dihapus!"})
+        else:
+            return JsonResponse({"status": False, "message": "Anda tidak memiliki izin."}, status=403)
+    except Article.DoesNotExist:
+        return JsonResponse({"status": False, "message": "Berita tidak ditemukan."}, status=404)
+
+@csrf_exempt
+def edit_article_flutter(request, id):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+
+    try:
+        article = Article.objects.get(pk=id)
+        
+        # Cek permission
+        if request.user != article.author and not request.user.is_superuser:
+            return JsonResponse({"status": False, "message": "Anda tidak memiliki izin."}, status=403)
+
+        data = json.loads(request.body)
+        
+        # Update field berita
+        article.title = data.get('title', article.title)
+        article.content = data.get('content', article.content)
+        article.category = data.get('category', article.category)
+        article.thumbnail = data.get('thumbnail', article.thumbnail)
+        
+        article.save()
+        return JsonResponse({"status": True, "message": "Berita berhasil diperbarui!"})
+        
+    except Article.DoesNotExist:
+        return JsonResponse({"status": False, "message": "Berita tidak ditemukan."}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": False, "message": str(e)}, status=500)

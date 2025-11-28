@@ -18,4 +18,6 @@ urlpatterns = [
     
     path('json/', views.show_json, name='show_json'), 
     path('json/<str:id>/', views.show_json_by_id, name='show_json_by_id'),
+    path('delete-flutter/<str:id>/', views.delete_article_flutter, name='delete_article_flutter'),
+    path('edit-flutter/<str:id>/', views.edit_article_flutter, name='edit_article_flutter'),
 ]
