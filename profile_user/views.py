@@ -154,23 +154,33 @@ def edit_status(request, status_id):
 def login_flutter(request):
     username = request.POST['username']
     password = request.POST['password']
+    
     user = authenticate(username=username, password=password)
+    
     if user is not None:
         if user.is_active:
             auth_login(request, user)
-            # Login status successful.
+            
+            pfp_url = ""
+            try:
+                # Ambil URL foto profil jika ada
+                if hasattr(user, 'userprofile'):
+                    pfp_url = user.userprofile.profile_picture or ""
+            except Exception as e:
+                pfp_url = ""
+
             return JsonResponse({
                 "username": user.username,
                 "status": True,
-                "message": "Login successful!"
-                # Add other data if you want to send data to Flutter.
+                "message": "Login successful!",
+                "profile_picture": pfp_url, 
+                "is_superuser": user.is_superuser, 
             }, status=200)
         else:
             return JsonResponse({
                 "status": False,
                 "message": "Login failed, account is disabled."
             }, status=401)
-
     else:
         return JsonResponse({
             "status": False,
