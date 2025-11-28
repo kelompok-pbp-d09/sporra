@@ -160,12 +160,11 @@ def show_json(request):
     for item in data:
         pfp_url = ""
         try:
-            if hasattr(item.author, 'profile') and item.author.profile.image:
-                pfp_url = item.author.profile.image.url
-            
+            if hasattr(item.author, 'userprofile'):
+                pfp_url = item.author.userprofile.profile_picture or ""
         except Exception as e:
-            print(f"Error ambil PFP untuk user {item.author}: {e}")
             pfp_url = ""
+
         list_articles.append({
             "model": "news.article",
             "pk": str(item.pk),
@@ -175,9 +174,7 @@ def show_json(request):
                 "thumbnail": item.thumbnail,
                 "category": item.category,
                 "author": item.author.username if item.author else "Anonymous",
-                
                 "author_pfp": pfp_url, 
-                
                 "news_views": item.news_views,
                 "created_at": item.created_at.isoformat(),
             }
