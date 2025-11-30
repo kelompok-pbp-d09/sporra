@@ -8,6 +8,9 @@ from event.models import Event
 from event.forms import EventForm
 from ticketing.models import Ticket
 from django.contrib.auth.decorators import login_required
+from django.utils.html import strip_tags
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 @login_required
@@ -184,3 +187,42 @@ def get_events_ajax(request):
         'upcoming_events': [serialize_event(e) for e in upcoming_events],
         'past_events': [serialize_event(e) for e in past_events],
     })
+
+@csrf_exempt
+def create_event_flutter(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        judul = strip_tags(data.get("judul", ""))
+        lokasi = strip_tags(data.get("lokasi", ""))
+        kategori = data.get("kategori", "")
+        deskripsi = strip_tags(data.get("deskripsi", ""))
+        date = data.get("date", "")
+        parsed_date = parse_datetime(date)
+        if parsed_date is None:
+            return JsonResponse({"status": "error", "message": "Invalid date format"}, status=400)
+        
+        new_event = Event(
+            judul=judul,
+            lokasi=lokasi,
+            kategori=kategori,
+            deskripsi=deskripsi,
+            date=parsed_date,
+            user = request.user if request.user.is_authenticated else None
+
+        )
+        new_event.save()
+        
+        local_date = timezone.localtime(new_event.date)
+        response_data = {
+            "id": str(new_event.id),
+            "judul": new_event.judul,
+            "lokasi": new_event.lokasi,
+            "kategori_display": new_event.get_kategori_display(),
+            "date_formatted": date_filter(local_date, "d M Y, H:i"),
+            "detail_url": reverse("event:event_detail", args=[new_event.id]),
+            "user_id": new_event.user.id if new_event.user else None,
+        }
+
+        return JsonResponse(response_data, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)

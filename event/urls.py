@@ -1,4 +1,4 @@
-from event.views import home_event, event_detail, create_event, edit_event, delete_event, get_events_ajax, get_event_ajax
+from event.views import home_event, event_detail, create_event, edit_event, delete_event, get_events_ajax, get_event_ajax, create_event_flutter
 from django.urls import path
 
 app_name = 'event'
