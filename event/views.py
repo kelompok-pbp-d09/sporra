@@ -9,7 +9,7 @@ from event.forms import EventForm
 from ticketing.models import Ticket
 from django.contrib.auth.decorators import login_required
 from django.utils.html import strip_tags
-from django.utils.dateparse import parse_datetime
+from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -98,10 +98,13 @@ def edit_event(request, id):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+@csrf_exempt
 def delete_event(request, id):
-    event = get_object_or_404(Event, pk=id)
-    event.delete()
-    return HttpResponseRedirect(reverse('event:home_event'))
+    if request.method == 'POST':
+        event = get_object_or_404(Event, pk=id)
+        event.delete()
+        return JsonResponse({'status': 'success', 'message': 'Event berhasil dihapus!'}, status=200)
+    return JsonResponse({'status': 'error', 'message': 'Metode tidak diizinkan'}, status=405)
 
 def get_event_ajax(request, id):
     event = get_object_or_404(Event, id=id)
@@ -176,53 +179,158 @@ def get_events_ajax(request):
         return {
             'id': str(event.id),
             'judul': event.judul,
+            'deskripsi': event.deskripsi,
             'lokasi': event.lokasi,
+            'kategori': event.kategori,
             'kategori_display': event.get_kategori_display(),
             'date_formatted': date_filter(local_date, "d M Y, H:i"),
             'detail_url': reverse('event:event_detail', args=[event.id]),
-            'user_id': event.user.id if event.user else None
+            'user_id': event.user.id if event.user else None,
+            'username': event.user.username if event.user else 'Anonymous',
         }
 
     return JsonResponse({
         'upcoming_events': [serialize_event(e) for e in upcoming_events],
         'past_events': [serialize_event(e) for e in past_events],
+        'current_user_id': request.user.id if request.user.is_authenticated else None,
     })
 
 @csrf_exempt
+@csrf_exempt
 def create_event_flutter(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
+    if request.method == 'POST':
+        if request.POST:
+            data = request.POST
+        else:
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+
         judul = strip_tags(data.get("judul", ""))
         lokasi = strip_tags(data.get("lokasi", ""))
-        kategori = data.get("kategori", "")
+        kategori = data.get("kategori", "lainnya")
         deskripsi = strip_tags(data.get("deskripsi", ""))
         date = data.get("date", "")
-        parsed_date = parse_datetime(date)
-        if parsed_date is None:
-            return JsonResponse({"status": "error", "message": "Invalid date format"}, status=400)
-        
-        new_event = Event(
-            judul=judul,
-            lokasi=lokasi,
-            kategori=kategori,
-            deskripsi=deskripsi,
-            date=parsed_date,
-            user = request.user if request.user.is_authenticated else None
-
-        )
-        new_event.save()
-        
-        local_date = timezone.localtime(new_event.date)
-        response_data = {
-            "id": str(new_event.id),
-            "judul": new_event.judul,
-            "lokasi": new_event.lokasi,
-            "kategori_display": new_event.get_kategori_display(),
-            "date_formatted": date_filter(local_date, "d M Y, H:i"),
-            "detail_url": reverse("event:event_detail", args=[new_event.id]),
-            "user_id": new_event.user.id if new_event.user else None,
+        bulan_map = {
+            "januari": "January", "februari": "February", "maret": "March",
+            "april": "April", "mei": "May", "juni": "June", "juli": "July",
+            "agustus": "August", "september": "September", "oktober": "October",
+            "november": "November", "desember": "December"
         }
 
-        return JsonResponse(response_data, status=200)
-    else:
-        return JsonResponse({"status": "error"}, status=401)
+        date_str = date.lower()
+        for indo, eng in bulan_map.items():
+            if indo in date_str:
+                date_str = date_str.replace(indo, eng)
+                break
+
+        parsed_date = None
+        for fmt in ["%d %B %Y %H.%M", "%d %B %Y %H:%M"]:
+            try:
+                parsed_date = datetime.strptime(date_str, fmt)
+                break
+            except ValueError:
+                continue
+
+        if not parsed_date:
+            return JsonResponse({
+                "status": "error",
+                "message": f"Format tanggal salah: {date}. Gunakan format: 12 Juli 2025 15.00"
+            }, status=400)
+
+        if timezone.is_naive(parsed_date):
+            parsed_date = timezone.make_aware(parsed_date)
+        
+        # --- Simpan Data ---
+        try:
+            new_event = Event(
+                judul=judul,
+                lokasi=lokasi,
+                kategori=kategori,
+                deskripsi=deskripsi,
+                date=parsed_date,
+                user=request.user if request.user.is_authenticated else None
+            )
+            new_event.save()
+            
+            return JsonResponse({"status": "success", "message": "Acara berhasil dibuat!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=401)
+
+@csrf_exempt
+def edit_event_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            event = Event.objects.get(pk=id)
+        except Event.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Event tidak ditemukan'}, status=404)
+
+        if event.user != request.user:
+            return JsonResponse({'status': 'error', 'message': 'Anda tidak memiliki izin mengedit event ini'}, status=403)
+
+        if request.POST:
+            data = request.POST
+        else:
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+
+        judul = strip_tags(data.get("judul", ""))
+        lokasi = strip_tags(data.get("lokasi", ""))
+        kategori = data.get("kategori", "lainnya")
+        deskripsi = strip_tags(data.get("deskripsi", ""))
+        date = data.get("date", "")
+
+        bulan_map = {
+            "januari": "January", "februari": "February", "maret": "March",
+            "april": "April", "mei": "May", "juni": "June", "juli": "July",
+            "agustus": "August", "september": "September", "oktober": "October",
+            "november": "November", "desember": "December",
+            
+            "jan": "January", "feb": "February", "mar": "March",
+            "apr": "April", "mei": "May", "jun": "June", "jul": "July",
+            "agu": "August", "agt": "August", "sep": "September", "okt": "October", 
+            "nov": "November", "des": "December",
+        }
+
+        date_str = date.lower().replace(',', '')
+        
+        for indo, eng in bulan_map.items():
+            if indo in date_str:
+                date_str = date_str.replace(indo, eng)
+                break
+
+        parsed_date = None
+        for fmt in ["%d %B %Y %H.%M", "%d %B %Y %H:%M"]:
+            try:
+                parsed_date = datetime.strptime(date_str, fmt)
+                break
+            except ValueError:
+                continue
+
+        if not parsed_date:
+            return JsonResponse({
+                "status": "error",
+                "message": f"Format tanggal salah: {date}. Gunakan format: 12 Juli 2025 15.00"
+            }, status=400)
+
+        if timezone.is_naive(parsed_date):
+            parsed_date = timezone.make_aware(parsed_date)
+        
+        try:
+            event.judul = judul
+            event.lokasi = lokasi
+            event.kategori = kategori
+            event.deskripsi = deskripsi
+            event.date = parsed_date
+            event.save()
+            
+            return JsonResponse({"status": "success", "message": "Acara berhasil diperbarui!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=401)
