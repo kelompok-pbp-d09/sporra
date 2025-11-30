@@ -34,7 +34,7 @@ class UserProfile(models.Model):
         return Post.objects.filter(author=self.user).count()
 
     @property
-    def news_created(self):
+    def total_news(self):
         """Menghitung jumlah Article (news) user secara real-time."""
         from news.models import Article
         return Article.objects.filter(author=self.user).count()
