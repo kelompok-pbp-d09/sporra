@@ -17,6 +17,7 @@ class UserProfile(models.Model):
     profile_picture = models.URLField(blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     events_created = models.IntegerField(default=0)
+    news_created = models.IntegerField(default=0)
 
 
     def __str__(self):
