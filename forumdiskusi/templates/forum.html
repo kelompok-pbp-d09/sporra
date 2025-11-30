@@ -101,7 +101,7 @@
                         data-id="{{ comment.id }}" data-vote="down">▼</button>
               </div>
               <div class="flex-1 min-w-0">
-                <a href="{% url 'profile_user:show_profile' comment.author.username %}" class="text-blue-300 hover:text-blue-400 transition duration-150">
+                <a href="<a href="{% url 'profile_user:user_profile' comment.author.username %}"" class="text-blue-300 hover:text-blue-400 transition duration-150">
                     @{{ comment.author.username|default:"Unknown" }}
                 </a>
                 <p id="comment-content-{{ comment.id }}" class="text-gray-200 whitespace-pre-line mt-1 break-words">{{ comment.content }}</p>
