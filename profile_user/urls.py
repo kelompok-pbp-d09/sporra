@@ -15,7 +15,5 @@ urlpatterns = [
     path('auth/login/', login_flutter, name='login_flutter'),
     path('auth/register/', register_flutter, name='register_flutter'),
     path('auth/logout/', logout_flutter, name='logout_flutter'),
-    path('<str:username>/', show_profile, name='show_profile'),
-    path('<int:id>/', show_profile, name='show_profile'),
     path('user/<str:username>/', show_profile, name='user_profile'),
 ]

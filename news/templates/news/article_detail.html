@@ -12,7 +12,7 @@
       <div class="text-gray-400 text-sm mb-6 flex flex-wrap items-center gap-x-3 gap-y-1">
         
         <span>Oleh: 
-          <a href="{% url 'profile_user:show_profile' article.author.id %}" class="text-blue-400 hover:text-blue-300 transition duration-150">
+          <a href="{% url 'profile_user:user_profile' article.author.username %}" class="text-blue-400 hover:text-blue-300 transition duration-150">
             {{ article.author.username|default:"Unknown" }}
           </a>
         </span>
