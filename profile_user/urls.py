@@ -15,5 +15,7 @@ urlpatterns = [
     path('auth/logout/', logout_flutter, name='logout_flutter'),
     path('delete_status/<int:status_id>/', delete_status, name='delete_status'),
     path('edit_status/<int:status_id>/', edit_status, name='edit_status'),
+    path('<str:username>/', show_profile, name='show_profile'),
+    path('<int:id>/', show_profile, name='show_profile'),
     path('user/<str:username>/', show_profile, name='user_profile'),
 ]
