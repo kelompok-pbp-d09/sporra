@@ -97,6 +97,7 @@ def my_bookings(request):
     return render(request, "my_bookings.html", {"bookings": bookings})
 
 # Versi JSON (Untuk Flutter / API)
+@csrf_exempt
 @login_required
 def get_my_bookings_ajax(request):
     bookings = Booking.objects.filter(user=request.user).select_related('ticket__event')
@@ -176,58 +177,50 @@ def get_tickets_ajax(request):
 def create_ticket(request):
     if request.method == 'POST':
         try:
+            # 1. Decode JSON
             data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            
+            # 2. Ambil Data
+            event_id = data.get('event')
+            ticket_type = data.get('ticket_type')
+            price = data.get('price')
+            available = data.get('available')
 
-        event_id = data.get('event')
-        ticket_type = data.get('ticket_type')
-        price = data.get('price')
-        available = data.get('available')
+            # 3. Validasi ID Event (Ubah ke String/UUID handling jika perlu)
+            # Pastikan event_id valid
+            if not event_id:
+                return JsonResponse({'status': 'error', 'message': 'Event ID tidak boleh kosong'}, status=400)
 
-        if not all([event_id, ticket_type, price, available]):
-            return JsonResponse({'error': 'Missing fields'}, status=400)
+            # Cek Event (Gunakan filter().first() agar tidak crash jika tidak ketemu)
+            event = Event.objects.filter(id=event_id).first()
+            if not event:
+                return JsonResponse({'status': 'error', 'message': 'Event tidak ditemukan'}, status=404)
 
-        # Cek permission: Apakah User adalah pemilik event atau Admin?
-        try:
+            # Cek Permission (Hanya admin atau pemilik event)
             is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
-            if is_admin:
-                event = Event.objects.get(id=event_id)
-            else:
-                event = Event.objects.get(id=event_id, user=request.user)
-        except Event.DoesNotExist:
-            return JsonResponse({'error': 'Event not found or forbidden'}, status=403)
+            if not is_admin and event.user != request.user:
+                return JsonResponse({'status': 'error', 'message': 'Anda tidak punya izin'}, status=403)
 
-        # Cek duplikasi tipe tiket
-        if Ticket.objects.filter(event=event, ticket_type=ticket_type).exists():
+            # 4. Buat Tiket
+            ticket = Ticket.objects.create(
+                event=event,
+                ticket_type=ticket_type,
+                price=price,
+                available=available
+            )
+
             return JsonResponse({
-                'success': False, 
-                'error': f"Tiket '{ticket_type}' untuk event ini sudah ada!"
-            }, status=400)
+                'status': 'success',
+                'message': 'Tiket berhasil dibuat!',
+                'ticket_id': ticket.id
+            })
 
-        # Buat Tiket Baru
-        ticket = Ticket.objects.create(
-            event=event,
-            ticket_type=ticket_type,
-            price=price,
-            available=available
-        )
+        except Exception as e:
+            # INI PENTING: Tangkap semua error dan kirim sebagai JSON, bukan HTML
+            print(f"ERROR SERVER: {e}") # Lihat ini di terminal
+            return JsonResponse({'status': 'error', 'message': f'Server Error: {str(e)}'}, status=500)
 
-        return JsonResponse({
-            'success': True,
-            'ticket': {
-                'id': ticket.id,
-                'event_title': ticket.event.judul,
-                'ticket_type': ticket.get_ticket_type_display(),
-                'price': float(ticket.price),
-                'available': ticket.available,
-                'event_id': ticket.event.id,
-                'can_edit': True
-            }
-        })
-    
-    return JsonResponse({'error': 'Method not allowed'}, status=405)
-
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
 @csrf_exempt
 @login_required
@@ -270,3 +263,36 @@ def delete_ticket_ajax(request, ticket_id):
         return JsonResponse({"success": True})
 
     return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+
+@csrf_exempt
+@login_required
+def get_user_events_dropdown(request):
+    """
+    API untuk Flutter: Mengambil daftar event milik user yang sedang login
+    agar bisa dipilih saat membuat tiket baru.
+    """
+    try:
+        # Cek apakah user adalah admin (sesuaikan logika is_admin dengan kode kamu sebelumnya)
+        is_admin = getattr(getattr(request.user, 'userprofile', None), 'is_admin', False)
+
+        if is_admin:
+            # Jika admin, ambil semua event
+            events = Event.objects.all().order_by('-date')
+        else:
+            # Jika user biasa, ambil HANYA event yang dibuat oleh user tersebut
+            events = Event.objects.filter(user=request.user).order_by('-date')
+
+        data = []
+        for e in events:
+            data.append({
+                "id": e.id,
+                "title": e.judul, # Pastikan di model Event nama fieldnya 'judul'
+            })
+
+        return JsonResponse({"events": data})
+    
+    except Exception as e:
+        print(e)
+        return JsonResponse({"events": [], "error": str(e)})

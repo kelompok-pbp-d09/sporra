@@ -1,5 +1,5 @@
 from django.urls import path
-from ticketing import views  # Pastikan import ini benar
+from ticketing import views 
 
 app_name = 'ticketing'
 
@@ -9,21 +9,24 @@ urlpatterns = [
     path('my-bookings/', views.my_bookings, name='my_bookings'),
 
     # === API & AJAX ENDPOINTS (JSON) ===
-    # Digunakan oleh Flutter dan JavaScript di Web
     
-    # 1. Booking Tiket (POST)
+    # 1. Booking Tiket 
+    # Pastikan Event ID di models.py kamu pakai UUID. Jika pakai Integer, ganti <uuid:event_id> jadi <int:event_id>
     path('book/<uuid:event_id>/', views.book_ticket, name='book_ticket'),
     
-    # 2. Get Data Tiket (GET)
+    # 2. Get Data Tiket
     path('tickets/data/', views.get_tickets_ajax, name='get_tickets'),
     
-    # 3. Get Booking User (GET)
+    # 3. Get Booking User
     path('api/my-bookings/', views.get_my_bookings_ajax, name='get_my_bookings_ajax'),
     
-    # 4. Create Ticket (POST)
-    path('create/', views.create_ticket, name='create_ticket'),
+    # 4. Create Ticket (FIXED: Ubah 'create/' menjadi 'create-ticket/')
+    path('create-ticket/', views.create_ticket, name='create_ticket'),
 
-path('edit_ticket_ajax/<int:ticket_id>/', views.edit_ticket_ajax, name='edit_ticket_ajax'),
-path('delete_ticket_ajax/<int:ticket_id>/', views.delete_ticket_ajax, name='delete_ticket_ajax'),
-
+    # 5. Edit & Delete (Pastikan Ticket ID adalah Integer/AutoField)
+    path('edit_ticket_ajax/<int:ticket_id>/', views.edit_ticket_ajax, name='edit_ticket_ajax'),
+    path('delete_ticket_ajax/<int:ticket_id>/', views.delete_ticket_ajax, name='delete_ticket_ajax'),
+    
+    # 6. Dropdown Event User
+    path('get-user-events/', views.get_user_events_dropdown, name='get_user_events_dropdown'),
 ]
