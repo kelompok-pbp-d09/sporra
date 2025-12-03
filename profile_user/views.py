@@ -260,3 +260,40 @@ def logout_flutter(request):
         "message": "Kamu telah berhasil logout",
         "username": username,
     }, status=200)
+
+def user_profile_json(request):
+    # 1. Cek apakah user sudah login
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "status": False,
+            "message": "User not logged in"
+        }, status=401)
+
+    user = request.user
+
+    try:
+        # 2. Ambil data UserProfile yang terhubung dengan User
+        profile = UserProfile.objects.get(user=user)
+        
+        # 3. Masukkan data ke dalam dictionary
+        # Kita mengambil field dari models.py
+        data = {
+            "status": True,
+            "username": user.username,
+            "full_name": profile.full_name,
+            "bio": profile.bio,
+            "phone": profile.phone,
+            "profile_picture": profile.profile_picture,
+            "role": profile.role,
+            "news_created": profile.news_created,
+            "total_comments": profile.komentar_created, 
+            "total_news_realtime": profile.total_news,
+        }
+        
+        return JsonResponse(data, status=200)
+
+    except UserProfile.DoesNotExist:
+        return JsonResponse({
+            "status": False,
+            "message": "Profile not found"
+        }, status=404)
