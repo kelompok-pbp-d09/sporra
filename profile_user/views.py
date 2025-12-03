@@ -285,9 +285,10 @@ def user_profile_json(request):
             "phone": profile.phone,
             "profile_picture": profile.profile_picture,
             "role": profile.role,
-            "news_created": profile.news_created,
+            "news_created": profile.total_news,
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,
+            "events_created": profile.events_created,
         }
         
         return JsonResponse(data, status=200)
