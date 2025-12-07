@@ -196,7 +196,6 @@ def get_events_ajax(request):
     })
 
 @csrf_exempt
-@csrf_exempt
 def create_event_flutter(request):
     if request.method == 'POST':
         if request.POST:
