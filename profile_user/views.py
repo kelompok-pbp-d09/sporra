@@ -275,19 +275,27 @@ def user_profile_json(request):
         # 2. Ambil data UserProfile yang terhubung dengan User
         profile = UserProfile.objects.get(user=user)
         
+        # Penanganan aman untuk gambar (jika ImageField kosong/tidak ada)
+        pfp_url = ""
+        if profile.profile_picture:
+            # Jika profile_picture adalah URL string, pakai langsung.
+            # Jika ImageField, gunakan .url
+            pfp_url = str(profile.profile_picture) 
+
         # 3. Masukkan data ke dalam dictionary
-        # Kita mengambil field dari models.py
         data = {
             "status": True,
             "username": user.username,
             "full_name": profile.full_name,
             "bio": profile.bio,
             "phone": profile.phone,
-            "profile_picture": profile.profile_picture,
+            "profile_picture": pfp_url,
             "role": profile.role,
-            "news_created": profile.news_created,
+            "is_superuser": user.is_superuser, # Untuk status Admin
+            "news_created": profile.total_news,
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,
+            "events_created": profile.events_created,
         }
         
         return JsonResponse(data, status=200)
