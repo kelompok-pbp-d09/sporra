@@ -119,6 +119,7 @@ def add_status(request):
         'created_at': status.created_at.strftime("%d %b %Y"),
     })
 
+@csrf_exempt
 @login_required
 @require_POST
 def delete_status(request, status_id):
@@ -131,6 +132,7 @@ def delete_status(request, status_id):
     
     return JsonResponse({'error': 'Anda tidak memiliki izin'}, status=403)
 
+@csrf_exempt
 @login_required
 @require_POST
 def edit_status(request, status_id):
