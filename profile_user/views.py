@@ -104,6 +104,7 @@ def logout_user(request):
     messages.info(request, "Kamu telah berhasil logout.")
     return redirect('landing-page')
 
+@csrf_exempt
 @login_required
 @require_POST
 def add_status(request):
