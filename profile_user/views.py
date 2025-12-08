@@ -279,6 +279,16 @@ def user_profile_json(request):
             # Jika ImageField, gunakan .url
             pfp_url = str(profile.profile_picture) 
 
+        statuses = profile.get_statuses().order_by('-created_at')
+        status_list = []
+        for s in statuses:
+            status_list.append({
+                "id": s.id,
+                "content": s.content,
+                # Format tanggal agar mudah dibaca di Flutter
+                "created_at": s.created_at.strftime("%d %b %Y"), 
+            })
+
         data = {
             "status": True,
             "username": user.username,
