@@ -251,3 +251,34 @@ def edit_article_flutter(request, id):
         return JsonResponse({"status": False, "message": "Berita tidak ditemukan."}, status=404)
     except Exception as e:
         return JsonResponse({"status": False, "message": str(e)}, status=500)
+    
+@csrf_exempt
+def create_article_flutter(request):
+    if request.method == 'POST':
+        try:
+            # Pastikan user sudah login
+            if not request.user.is_authenticated:
+                return JsonResponse({"status": False, "message": "Anda harus login terlebih dahulu."}, status=401)
+
+            data = json.loads(request.body)
+            
+            # Validasi input sederhana
+            if not all(k in data for k in ("title", "content", "category")):
+                return JsonResponse({"status": False, "message": "Data tidak lengkap"}, status=400)
+
+            new_article = Article.objects.create(
+                author=request.user,
+                title=data["title"],
+                content=data["content"],
+                category=data["category"],
+                # Thumbnail opsional, default string kosong jika tidak ada
+                thumbnail=data.get("thumbnail", "") 
+            )
+
+            new_article.save()
+
+            return JsonResponse({"status": True, "message": "Berita berhasil dibuat!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)

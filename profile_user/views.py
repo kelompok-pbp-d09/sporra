@@ -273,14 +273,11 @@ def user_profile_json(request):
     try:
         profile = UserProfile.objects.get(user=user)
         
-        statuses = profile.get_statuses().order_by('-created_at')
-        status_list = []
-        for s in statuses:
-            status_list.append({
-                "id": s.id,
-                "content": s.content,
-                "created_at": s.created_at.strftime("%d %b %Y"), 
-            })
+        pfp_url = ""
+        if profile.profile_picture:
+            # Jika profile_picture adalah URL string, pakai langsung.
+            # Jika ImageField, gunakan .url
+            pfp_url = str(profile.profile_picture) 
 
         data = {
             "status": True,
@@ -288,8 +285,9 @@ def user_profile_json(request):
             "full_name": profile.full_name or user.username,
             "bio": profile.bio or "-",
             "phone": profile.phone or "-",
-            "profile_picture": profile.profile_picture or "",
+            "profile_picture": pfp_url or "",
             "role": profile.role or "user",
+            "is_superuser": user.is_superuser, # Untuk status Admin
             "news_created": profile.total_news, 
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,

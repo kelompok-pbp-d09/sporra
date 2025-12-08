@@ -1,4 +1,4 @@
-from event.views import home_event, event_detail, create_event, edit_event, delete_event, get_events_ajax, get_event_ajax, create_event_flutter
+from event.views import home_event, event_detail, create_event, edit_event, delete_event, get_events_ajax, get_event_ajax, create_event_flutter, edit_event_flutter
 from django.urls import path
 
 app_name = 'event'
@@ -12,4 +12,7 @@ urlpatterns = [
     path('ajax/get-event/<uuid:id>/', get_event_ajax, name='get_event_ajax'),
     path('ajax/get-events/', get_events_ajax, name='get_events_ajax'),
     path('json/', get_events_ajax, name='event_json'),
+    path('create-event-flutter/', create_event_flutter, name='create_event_flutter'),
+    path('edit-event-flutter/<str:id>/', edit_event_flutter, name='edit_event_flutter'),
+
 ]

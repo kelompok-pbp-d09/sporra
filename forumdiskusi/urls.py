@@ -8,5 +8,7 @@ urlpatterns = [
     path('<uuid:pk>/add_comment/', views.add_comment, name='add_comment'),
     path('delete_comment/<int:post_id>/', views.delete_comment, name='delete_comment'),
     path('edit_comment/<int:post_id>/', views.edit_comment, name='edit_comment'),
-    path('post/<int:post_id>/vote/', views.vote_post, name='vote_post'), 
+    path('post/<int:post_id>/vote/', views.vote_post, name='vote_post'),
+    path('<uuid:pk>/json/', views.forum_json, name='forum_json'),
+    path('proxy-image/', views.proxy_image, name='proxy_image'),
 ]
