@@ -262,7 +262,6 @@ def logout_flutter(request):
     }, status=200)
 
 def user_profile_json(request):
-    # 1. Cek apakah user sudah login
     if not request.user.is_authenticated:
         return JsonResponse({
             "status": False,
@@ -272,23 +271,31 @@ def user_profile_json(request):
     user = request.user
 
     try:
-        # 2. Ambil data UserProfile yang terhubung dengan User
         profile = UserProfile.objects.get(user=user)
         
-        # 3. Masukkan data ke dalam dictionary
-        # Kita mengambil field dari models.py
+        statuses = profile.get_statuses().order_by('-created_at')
+        status_list = []
+        for s in statuses:
+            status_list.append({
+                "id": s.id,
+                "content": s.content,
+                "created_at": s.created_at.strftime("%d %b %Y"), 
+            })
+
         data = {
             "status": True,
             "username": user.username,
-            "full_name": profile.full_name,
-            "bio": profile.bio,
-            "phone": profile.phone,
-            "profile_picture": profile.profile_picture,
-            "role": profile.role,
-            "news_created": profile.total_news,
+            "full_name": profile.full_name or user.username,
+            "bio": profile.bio or "-",
+            "phone": profile.phone or "-",
+            "profile_picture": profile.profile_picture or "",
+            "role": profile.role or "user",
+            "news_created": profile.total_news, 
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,
             "events_created": profile.events_created,
+            
+            "statuses": status_list, 
         }
         
         return JsonResponse(data, status=200)
