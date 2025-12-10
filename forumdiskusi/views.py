@@ -173,9 +173,6 @@ def forum_json(request, pk):
     forum, _ = ForumDiskusi.objects.get_or_create(article=article)
     comments = forum.posts.all().order_by('-score', '-created_at')
 
-    # -----------------------
-    # Format NewsEntry
-    # -----------------------
     def news_entry_format(a):
         return {
             "model": "news.article",
@@ -191,9 +188,6 @@ def forum_json(request, pk):
             }
         }
 
-    # -----------------------
-    # Top forums
-    # -----------------------
     top_forums_qs = (
         ForumDiskusi.objects
         .annotate(post_count=Count('posts'))
@@ -211,15 +205,11 @@ def forum_json(request, pk):
         for tf in top_forums_qs
     ]
 
-    # -----------------------
     # Hottest articles
-    # -----------------------
     hottest_articles = Article.objects.exclude(pk=article.pk).order_by('-news_views')[:3]
     hottest_json = [news_entry_format(h) for h in hottest_articles]
 
-    # -----------------------
     # Comments + user_vote
-    # -----------------------
     comments_json = []
     for c in comments:
         vote = None
@@ -227,20 +217,24 @@ def forum_json(request, pk):
             vote = Vote.objects.filter(post=c, user=request.user).first()
 
         user_vote = vote.value if vote else 0
+        pfp_url = ""
+        try:
+            if hasattr(c.author, 'userprofile'):
+                pfp_url = c.author.userprofile.profile_picture or ""
+        except Exception:
+            pfp_url = ""
 
         comments_json.append({
             "id": c.id,
             "author": c.author.username,
+            "author_pfp": pfp_url,
             "content": c.content,
             "score": c.score,
             "created_at": c.created_at.isoformat(),
             "user_vote": user_vote,
         })
 
-
-    # -----------------------
     # FINAL JSON
-    # -----------------------
     return JsonResponse({
         "forum_id": str(forum.id),
         "article": news_entry_format(article),
