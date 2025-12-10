@@ -104,6 +104,7 @@ def logout_user(request):
     messages.info(request, "Kamu telah berhasil logout.")
     return redirect('landing-page')
 
+@csrf_exempt
 @login_required
 @require_POST
 def add_status(request):
@@ -119,6 +120,7 @@ def add_status(request):
         'created_at': status.created_at.strftime("%d %b %Y"),
     })
 
+@csrf_exempt
 @login_required
 @require_POST
 def delete_status(request, status_id):
@@ -131,6 +133,7 @@ def delete_status(request, status_id):
     
     return JsonResponse({'error': 'Anda tidak memiliki izin'}, status=403)
 
+@csrf_exempt
 @login_required
 @require_POST
 def edit_status(request, status_id):
@@ -262,7 +265,6 @@ def logout_flutter(request):
     }, status=200)
 
 def user_profile_json(request):
-    # 1. Cek apakah user sudah login
     if not request.user.is_authenticated:
         return JsonResponse({
             "status": False,
@@ -272,23 +274,39 @@ def user_profile_json(request):
     user = request.user
 
     try:
-        # 2. Ambil data UserProfile yang terhubung dengan User
         profile = UserProfile.objects.get(user=user)
         
-        # 3. Masukkan data ke dalam dictionary
-        # Kita mengambil field dari models.py
+        pfp_url = ""
+        if profile.profile_picture:
+            # Jika profile_picture adalah URL string, pakai langsung.
+            # Jika ImageField, gunakan .url
+            pfp_url = str(profile.profile_picture) 
+
+        statuses = profile.get_statuses().order_by('-created_at')
+        status_list = []
+        for s in statuses:
+            status_list.append({
+                "id": s.id,
+                "content": s.content,
+                # Format tanggal agar mudah dibaca di Flutter
+                "created_at": s.created_at.strftime("%d %b %Y"), 
+            })
+
         data = {
             "status": True,
             "username": user.username,
-            "full_name": profile.full_name,
-            "bio": profile.bio,
-            "phone": profile.phone,
-            "profile_picture": profile.profile_picture,
-            "role": profile.role,
-            "news_created": profile.total_news,
+            "full_name": profile.full_name or user.username,
+            "bio": profile.bio or "-",
+            "phone": profile.phone or "-",
+            "profile_picture": pfp_url or "",
+            "role": profile.role or "user",
+            "is_superuser": user.is_superuser, # Untuk status Admin
+            "news_created": profile.total_news, 
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,
             "events_created": profile.events_created,
+            
+            "statuses": status_list, 
         }
         
         return JsonResponse(data, status=200)
