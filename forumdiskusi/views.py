@@ -198,12 +198,12 @@ def forum_json(request, pk):
 
     top_forums_json = [
         {
-            "article_id": str(tf.article.pk),
-            "title": tf.article.title,
-            "post_count": tf.post_count
+            "post_count": tf.post_count,
+            "article": news_entry_format(tf.article)
         }
         for tf in top_forums_qs
     ]
+
 
     # Hottest articles
     hottest_articles = Article.objects.exclude(pk=article.pk).order_by('-news_views')[:3]
