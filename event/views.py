@@ -163,6 +163,7 @@ def get_event_ajax(request, id):
         logging.error(f"Error in get_event_ajax: {e}")
         return JsonResponse({'success': False, 'error': str(e)})
 
+@csrf_exempt
 def get_events_ajax(request):
     category = request.GET.get('category', '')
     now = timezone.now()
