@@ -316,3 +316,52 @@ def user_profile_json(request):
             "status": False,
             "message": "Profile not found"
         }, status=404)
+
+@csrf_exempt
+def edit_profile_flutter(request):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+
+    user_profile = request.user.userprofile
+    data = {}
+
+    # Handle input JSON atau Form Data
+    try:
+        if request.content_type == "application/json":
+            data = json.loads(request.body)
+        else:
+            data = request.POST
+    except json.JSONDecodeError:
+        return JsonResponse({"status": False, "message": "Invalid JSON"}, status=400)
+
+    # Ambil data dari request
+    full_name = data.get('full_name')
+    bio = data.get('bio')
+    phone = data.get('phone')
+    profile_picture = data.get('profile_picture')
+
+    # Update data profile
+    if full_name:
+        user_profile.full_name = full_name
+    if bio:
+        user_profile.bio = bio
+    if phone:
+        user_profile.phone = phone
+    if profile_picture:
+        # Asumsi profile_picture dari Flutter dikirim sebagai URL String
+        user_profile.profile_picture = profile_picture
+
+    try:
+        user_profile.save()
+        return JsonResponse({
+            "status": True, 
+            "message": "Profile updated successfully!",
+            "data": {
+                "full_name": user_profile.full_name,
+                "bio": user_profile.bio,
+                "phone": user_profile.phone,
+                "profile_picture": str(user_profile.profile_picture)
+            }
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({"status": False, "message": str(e)}, status=500)

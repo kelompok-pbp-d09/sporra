@@ -17,4 +17,6 @@ urlpatterns = [
     path('auth/logout/', logout_flutter, name='logout_flutter'),
     path('user/<str:username>/', show_profile, name='user_profile'),
     path('json/', user_profile_json, name='user_profile_json'),
+    path('json/', user_profile_json, name='user_profile_json'),
+    path('edit-profile-flutter/', edit_profile_flutter, name='edit_profile_flutter'),
 ]
