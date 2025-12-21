@@ -264,14 +264,13 @@ def logout_flutter(request):
         "username": username,
     }, status=200)
 
-def user_profile_json(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            "status": False,
-            "message": "User not logged in"
-        }, status=401)
-
-    user = request.user
+def user_profile_json(request, username=None):
+    # Jika username diberikan, cari user tersebut. 
+    # Jika tidak (None), gunakan request.user (user yang sedang login).
+    if username:
+        user = get_object_or_404(User, username=username)
+    else:
+        user = request.user
 
     try:
         profile = UserProfile.objects.get(user=user)
@@ -292,6 +291,8 @@ def user_profile_json(request):
                 "created_at": s.created_at.strftime("%d %b %Y"), 
             })
 
+        is_own_profile = (request.user == user)
+
         data = {
             "status": True,
             "username": user.username,
@@ -305,6 +306,7 @@ def user_profile_json(request):
             "total_comments": profile.komentar_created, 
             "total_news_realtime": profile.total_news,
             "events_created": profile.events_created,
+            "is_own_profile": is_own_profile,
             
             "statuses": status_list, 
         }
